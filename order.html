@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Custom Order - Rosarae Studio</title>
+  <meta name="description" content="Place a custom ribbon rose order at Rosarae Studio. Choose your size, colors, and add-ons with a live price calculator." />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <nav class="nav">
+    <a href="index.html" class="nav-logo">Rosarae Studio</a>
+    <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+    <ul class="nav-links">
+      <li><a href="index.html#gallery">Gallery</a></li>
+      <li><a href="shop.html">Shop</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="contact.html">Contact</a></li>
+      <li><a href="order.html">Custom Order</a></li>
+    </ul>
+    <a href="order.html" class="btn btn-primary" style="font-size:13px;padding:8px 18px;">Order Now</a>
+  </nav>
+
+  <section class="section">
+    <div class="form-section">
+      <a href="shop.html" class="back-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Back to shop
+      </a>
+
+      <h1 style="margin-bottom:0.5rem;">Custom Order</h1>
+      <p style="font-size:14px;color:#5f5e5a;margin-bottom:2rem;line-height:1.7;">
+        Fill out the details below and I'll be in touch within 24 hours to confirm your order.
+        Payment is sent via <a href="https://cash.app/$SissyLuv1" target="_blank" rel="noopener"><strong>CashApp - $SissyLuv101</strong></a> once confirmed.
+      </p>
+
+      <div class="section-label">Your info</div>
+      <div class="form-grid-2">
+        <div class="field"><label for="o-name">Name</label><input type="text" id="o-name" placeholder="Your name" /></div>
+        <div class="field"><label for="o-email">Email</label><input type="email" id="o-email" placeholder="you@email.com" /></div>
+      </div>
+
+      <div class="section-label">Bouquet size</div>
+      <div class="tier-tabs">
+        <button class="tier-tab active" onclick="setTier('small', this)">Small &nbsp;&middot;&nbsp; 1-9 roses &nbsp;&middot;&nbsp; $2.50/rose</button>
+        <button class="tier-tab" onclick="setTier('medium', this)">Medium &nbsp;&middot;&nbsp; 10-40 roses &nbsp;&middot;&nbsp; $2.75/rose</button>
+        <button class="tier-tab" onclick="setTier('large', this)">Large &nbsp;&middot;&nbsp; 50-100 roses &nbsp;&middot;&nbsp; $3.00/rose</button>
+      </div>
+
+      <div id="oc-small" style="margin-bottom:1rem;display:block;">
+        <div class="field"><label>Number of roses</label><div class="rose-count-row"><input type="range" min="1" max="9" value="5" step="1" id="sm-r" oninput="updR('sm')" /><span class="rose-val" id="sm-rv">5</span><span style="font-size:13px;color:#9e9b96;">roses</span></div></div>
+      </div>
+      <div id="oc-medium" style="display:none;margin-bottom:1rem;">
+        <div class="field"><label>Number of roses</label><div class="rose-count-row"><input type="range" min="10" max="40" value="20" step="1" id="md-r" oninput="updR('md')" /><span class="rose-val" id="md-rv">20</span><span style="font-size:13px;color:#9e9b96;">roses</span></div></div>
+      </div>
+      <div id="oc-large" style="display:none;margin-bottom:1rem;">
+        <div class="field"><label>Number of roses</label><div class="rose-count-row"><input type="range" min="50" max="100" value="75" step="1" id="lg-r" oninput="updR('lg')" /><span class="rose-val" id="lg-rv">75</span><span style="font-size:13px;color:#9e9b96;">roses</span></div></div>
+      </div>
+
+      <div class="section-label">Satin ribbon colors</div>
+      <div class="color-grid" id="ribbon-grid"></div>
+      <div id="ribbon-extra-note" style="font-size:12px;color:#b06b7a;margin-bottom:.75rem;display:none;"></div>
+
+      <div class="section-label">Occasion ribbon</div>
+      <div class="field" style="margin-bottom:1.25rem;">
+        <select id="o-occ-ribbon" onchange="calcOrder()">
+          <option value="">None</option>
+          <option value="15">Black "Happy Birthday" satin ribbon - $15</option>
+          <option value="15">Light Blue "Happy Birthday" satin ribbon - $15</option>
+          <option value="15">Claret Red "Happy Birthday" satin ribbon - $15</option>
+          <option value="15">White &amp; Gold "Happy Birthday" satin ribbon - $15</option>
+          <option value="15">Hot Pink "Happy Mother's Day" satin ribbon - $15</option>
+          <option value="15">Claret Red "Love You" satin ribbon - $15</option>
+          <option value="15">Green "Merry Christmas" satin ribbon - $15</option>
+        </select>
+      </div>
+
+      <div class="section-label">Floral wrap</div>
+      <div class="color-grid" id="wrap-grid"></div>
+      <div class="addon-grid" style="margin-bottom:1.25rem;">
+        <label class="addon-check"><input type="checkbox" id="o-mesh" onchange="calcOrder()" /> Black mesh pearl wrap <span class="addon-price">+$8.00</span></label>
+      </div>
+
+      <div class="section-label">Add-ons</div>
+      <div class="addon-grid">
+        <label class="addon-check"><input type="checkbox" id="o-bear" onchange="calcOrder()" /> Bear <span class="addon-price">+$10.00</span></label>
+        <label class="addon-check"><input type="checkbox" id="o-diamonds" onchange="calcOrder()" /> Diamond push pins <span class="addon-price">+$4.00</span></label>
+        <label class="addon-check"><input type="checkbox" id="o-rush" onchange="calcOrder()" /> Rush order <span class="addon-price">+$20.00</span></label>
+      </div>
+      <div id="rush-note" style="display:none;font-size:12px;color:#5f5e5a;margin-bottom:.75rem;line-height:1.6;">Rush orders completed in 1-1.5 weeks. Regular orders may take 2 weeks or longer.</div>
+
+      <div id="bear-colors" style="display:none;">
+        <div style="font-size:13px;color:#5f5e5a;margin-bottom:6px;">Bear color</div>
+        <div class="color-grid" style="grid-template-columns:repeat(auto-fill,minmax(140px,1fr));margin-bottom:1rem;">
+          <label class="color-opt"><input type="radio" name="bear" value="Pink" /> <span class="color-dot" style="background:#f4b8c8;"></span>Pink</label>
+          <label class="color-opt"><input type="radio" name="bear" value="Blue/White" /> <span class="color-dot" style="background:#b8d4f0;"></span>Blue / White</label>
+          <label class="color-opt"><input type="radio" name="bear" value="Cream" /> <span class="color-dot" style="background:#f5ecd7;"></span>Cream</label>
+          <label class="color-opt"><input type="radio" name="bear" value="Brown" /> <span class="color-dot" style="background:#a07850;"></span>Brown</label>
+        </div>
+      </div>
+
+      <div class="section-label">Occasion &amp; notes</div>
+      <div class="field"><label for="o-occasion">Occasion</label><select id="o-occasion"><option>Birthday</option><option>Wedding</option><option>Anniversary</option><option>Mother's Day</option><option>Valentine's Day</option><option>Home decor</option><option>Gift</option><option>Other</option></select></div>
+      <div class="field"><label for="o-notes">Anything else I should know</label><textarea id="o-notes" placeholder="Deadline, color combos, special requests, inspo photos..."></textarea></div>
+
+      <div class="price-summary">
+        <div class="price-row" id="op-rose-row"><span>5 roses x $2.50</span><span>$12.50</span></div>
+        <div id="op-addon-rows"></div>
+        <div class="price-total"><span>Estimated total</span><span id="op-total">$12.50</span></div>
+      </div>
+
+      <div class="cashapp-box">
+        <strong>Payment via CashApp</strong> - After I confirm your order by email, send payment to <a href="https://cash.app/$SissyLuv1" target="_blank" rel="noopener"><strong>$SissyLuv101</strong></a>.
+      </div>
+
+      <button class="btn btn-primary btn-full" style="margin-top:1.25rem;padding:15px;" onclick="submitOrderForm()">Send My Order Request</button>
+    </div>
+  </section>
+
+  <footer>
+    &copy; 2026 Rosarae Studio &nbsp;&middot;&nbsp; Handmade with love
+    &nbsp;&middot;&nbsp; <a href="mailto:caytlyn09@gmail.com">caytlyn09@gmail.com</a>
+    &nbsp;&middot;&nbsp; <a href="https://cash.app/$SissyLuv1" target="_blank" rel="noopener">$SissyLuv101</a>
+  </footer>
+
+  <div class="toast" id="toast"></div>
+  <script src="script.js"></script>
+</body>
+</html>

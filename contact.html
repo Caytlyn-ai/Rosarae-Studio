@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contact - Rosarae Studio</title>
+  <meta name="description" content="Get in touch with Rosarae Studio. Questions, large orders, or just want to say hi - reach out!" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <nav class="nav">
+    <a href="index.html" class="nav-logo">Rosarae Studio</a>
+    <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+    <ul class="nav-links">
+      <li><a href="index.html#gallery">Gallery</a></li>
+      <li><a href="shop.html">Shop</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="contact.html">Contact</a></li>
+      <li><a href="order.html">Custom Order</a></li>
+    </ul>
+    <a href="order.html" class="btn btn-primary" style="font-size:13px;padding:8px 18px;">Order Now</a>
+  </nav>
+
+  <div class="page-header">
+    <h1>Get in Touch</h1>
+    <p>Questions, large orders, or just want to say hi - I'd love to hear from you.</p>
+  </div>
+
+  <section class="section">
+    <div class="container">
+      <div class="fade-in" style="display:grid;grid-template-columns:1fr 1fr;gap:3rem;max-width:840px;margin:0 auto;align-items:start;">
+        <div>
+          <h2 style="margin-bottom:1.5rem;">Contact Info</h2>
+          <div style="margin-bottom:1.5rem;">
+            <p style="font-size:13px;color:#9e9b96;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Email</p>
+            <a href="mailto:caytlyn09@gmail.com" style="font-size:15px;">caytlyn09@gmail.com</a>
+          </div>
+          <div style="margin-bottom:1.5rem;">
+            <p style="font-size:13px;color:#9e9b96;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Payment</p>
+            <a href="https://cash.app/$SissyLuv1" target="_blank" rel="noopener" style="font-size:15px;">CashApp - $SissyLuv101</a>
+          </div>
+          <div style="margin-bottom:1.5rem;">
+            <p style="font-size:13px;color:#9e9b96;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Response Time</p>
+            <p style="font-size:15px;color:#5f5e5a;">Within 24 hours</p>
+          </div>
+        </div>
+
+        <div>
+          <h2 style="margin-bottom:1.5rem;">Send a Message</h2>
+          <div class="order-form">
+            <div class="form-grid-2">
+              <div class="field">
+                <label for="c-name">Your name</label>
+                <input type="text" id="c-name" placeholder="Your name" />
+              </div>
+              <div class="field">
+                <label for="c-email">Email</label>
+                <input type="email" id="c-email" placeholder="you@email.com" />
+              </div>
+            </div>
+            <div class="field">
+              <label for="c-subject">Subject</label>
+              <input type="text" id="c-subject" placeholder="What's this about?" />
+            </div>
+            <div class="field">
+              <label for="c-message">Message</label>
+              <textarea id="c-message" placeholder="Tell me anything - questions, order ideas, or just to say hi..."></textarea>
+            </div>
+            <button class="btn btn-primary btn-full" onclick="submitContactForm()">Send Message</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    &copy; 2026 Rosarae Studio &nbsp;&middot;&nbsp; Handmade with love
+    &nbsp;&middot;&nbsp; <a href="mailto:caytlyn09@gmail.com">caytlyn09@gmail.com</a>
+    &nbsp;&middot;&nbsp; <a href="https://cash.app/$SissyLuv1" target="_blank" rel="noopener">$SissyLuv101</a>
+  </footer>
+
+  <div class="toast" id="toast"></div>
+  <script src="script.js"></script>
+</body>
+</html>

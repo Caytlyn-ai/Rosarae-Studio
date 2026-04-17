@@ -66,6 +66,13 @@ const SHOP_EXTRAS = [
   { id: 'diamonds', label: 'Diamond push pins', price: 4 },
 ];
 
+const BEAR_COLORS = [
+  { n: 'Pink', h: '#f4b8c8' },
+  { n: 'Blue / White', h: '#b8d4f0' },
+  { n: 'Cream', h: '#f5ecd7' },
+  { n: 'Brown', h: '#a07850' },
+];
+
 const DELIVERY_OPTIONS = [
   { id: 'pickup', label: 'Pickup', price: 0 },
   { id: 'delivery', label: 'Local Delivery', price: 15 },
@@ -76,12 +83,24 @@ function fmt(n) {
   return '$' + n.toFixed(2);
 }
 
+function encode(data) {
+  return Object.keys(data)
+    .map((key) => encodeURIComponent(key) + '=' + encodeURIComponent(data[key]))
+    .join('&');
+}
+
 function showToast(msg) {
   const t = document.getElementById('toast');
   if (!t) return;
   t.textContent = msg;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 4000);
+}
+
+function getSelectedValues(selector) {
+  return Array.from(document.querySelectorAll(selector))
+    .filter((input) => input.checked)
+    .map((input) => input.value);
 }
 
 /* ── MOBILE NAV TOGGLE ── */
@@ -124,6 +143,30 @@ function buildColorGrid(containerId, colors, inputName) {
       ${c.n}
     </label>`;
   }).join('');
+}
+
+function buildWrapGrid() {
+  const grid = document.getElementById('wrap-grid');
+  if (!grid) return;
+
+  grid.innerHTML = WRAP_COLORS.map((c) => {
+    const border = (c.h === '#ffffff' || c.h === '#f8f4e8') ? 'border:1px solid #ccc;' : '';
+    return `<label class="color-opt wrap-opt">
+      <input type="checkbox" name="wrap" value="${c.n}" onchange="handleWrapSelection(this)">
+      <span class="color-dot" style="background:${c.h};${border}"></span>
+      <span>${c.n}</span>
+      <span class="wrap-price-tag">+$4</span>
+    </label>`;
+  }).join('');
+}
+
+function handleWrapSelection(input) {
+  const selected = document.querySelectorAll('#wrap-grid input:checked');
+  if (selected.length > 2) {
+    input.checked = false;
+    showToast('You can choose up to 2 floral wraps.');
+  }
+  calcOrder();
 }
 
 /* ── TIER TABS (order page) ── */
@@ -169,8 +212,10 @@ function calcOrder() {
   const extraNote   = document.getElementById('ribbon-extra-note');
   const bearSection = document.getElementById('bear-colors');
   const rushNote    = document.getElementById('rush-note');
+  const tierField   = document.getElementById('selected-tier');
 
   if (!roseRow || !totalEl) return;
+  if (tierField) tierField.value = currentTier;
 
   let roses = 5;
   const rate = TIER_RATES[currentTier] || 2.50;
@@ -210,6 +255,13 @@ function calcOrder() {
     addl += 8;
   }
 
+  const wrapSelections = document.querySelectorAll('#wrap-grid input:checked');
+  if (wrapSelections.length > 0) {
+    const wrapCost = wrapSelections.length * 4;
+    rows += `<div class="price-row"><span>Floral wrap colors (${wrapSelections.length})</span><span>+${fmt(wrapCost)}</span></div>`;
+    addl += wrapCost;
+  }
+
   // Bear
   const bearCB = document.getElementById('o-bear');
   if (bearCB?.checked) {
@@ -240,7 +292,10 @@ function calcOrder() {
 }
 
 /* ── FORM SUBMISSION (contact/order) ── */
-function submitOrderForm() {
+function submitOrderForm(event) {
+  event.preventDefault();
+
+  const form = event.target;
   const name  = document.getElementById('o-name')?.value.trim();
   const email = document.getElementById('o-email')?.value.trim();
 
@@ -249,13 +304,43 @@ function submitOrderForm() {
     return;
   }
 
-  // In production: replace this with a real form handler (Formspree, EmailJS, etc.)
-  showToast('Order sent! I\'ll be in touch within 24 hours.');
+  const data = {
+    'form-name': form.getAttribute('name'),
+    subject: 'New custom order request from Rosarae Studio',
+    name,
+    email,
+    selected_tier: currentTier,
+    rose_count: document.getElementById('order-rose-range')?.value || '',
+    ribbon: getSelectedValues('#ribbon-grid input').join(', '),
+    occasion_ribbon: document.getElementById('o-occ-ribbon')?.selectedOptions?.[0]?.textContent || 'None',
+    wrap: getSelectedValues('#wrap-grid input').join(', '),
+    mesh_wrap: document.getElementById('o-mesh')?.checked ? 'Black mesh pearl wrap' : '',
+    add_bear: document.getElementById('o-bear')?.checked ? 'Bear' : '',
+    diamond_push_pins: document.getElementById('o-diamonds')?.checked ? 'Diamond push pins' : '',
+    rush_order: document.getElementById('o-rush')?.checked ? 'Rush order' : '',
+    bear_color: document.querySelector('input[name="bear_color"]:checked')?.value || '',
+    occasion: document.getElementById('o-occasion')?.value || '',
+    notes: document.getElementById('o-notes')?.value || '',
+  };
 
-  // Optional: clear fields
-  document.querySelectorAll('.order-form input[type=text], .order-form input[type=email], .order-form textarea').forEach(el => {
-    el.value = '';
-  });
+  fetch('/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: encode(data),
+  })
+    .then(() => {
+      showToast('Order request sent! Check Netlify Forms for the submission.');
+      form.reset();
+      currentTier = 'small';
+      document.querySelectorAll('.tier-tabs .tier-tab').forEach((button, index) => {
+        button.classList.toggle('active', index === 0);
+      });
+      syncOrderRangeToTier(currentTier);
+      calcOrder();
+    })
+    .catch(() => {
+      showToast('The order could not send. Please try again.');
+    });
 }
 
 function submitContactForm() {
@@ -371,7 +456,32 @@ function renderRibbonShop() {
   const grid = document.getElementById('ribbon-shop-grid');
   if (!grid) return;
 
-  grid.innerHTML = RIBBON_COLORS.map((color, index) => {
+  const singleRoseCard = `
+    <article class="ribbon-gallery-card ribbon-feature-card" data-ribbon-trigger="single-rose-bear" tabindex="0" role="button" aria-label="Open Single Rose plus Keychain Bear details">
+      <div class="ribbon-gallery-visual ribbon-feature-visual">
+        <div class="ribbon-gallery-frame">
+          <div class="single-rose-showcase">
+            <div class="single-rose-stem"></div>
+            <div class="single-rose-bloom"></div>
+            <div class="single-bear-tag">Keychain Bear</div>
+          </div>
+          <div class="ribbon-gallery-overlay">
+            <span class="ribbon-gallery-zoom">Open Details</span>
+          </div>
+        </div>
+      </div>
+      <div class="ribbon-gallery-content">
+        <div class="ribbon-gallery-title-row">
+          <span class="ribbon-card-dot" style="background:#f4b8c8;"></span>
+          <h3 class="ribbon-gallery-title">Single Rose + Bear</h3>
+        </div>
+        <p class="ribbon-gallery-copy">A single ribbon rose paired with a keychain bear for a sweet little keepsake gift.</p>
+        <div class="ribbon-gallery-price">from ${fmt(13)}</div>
+      </div>
+    </article>
+  `;
+
+  const bouquetCards = RIBBON_COLORS.map((color, index) => {
     const slug = slugify(color.n);
     const border = (color.h === '#ffffff' || color.h === '#f8f4e8') ? 'border:1px solid #ccc;' : '';
     const startingPrice = fmt(SHOP_SIZES[0].price);
@@ -405,6 +515,8 @@ function renderRibbonShop() {
     `;
   }).join('');
 
+  grid.innerHTML = singleRoseCard + bouquetCards;
+
   attachRibbonShopEvents();
 }
 
@@ -428,14 +540,15 @@ function renderRibbonDetail(colorName) {
     </label>
   `).join('');
 
-  const wrapOptions = wraps.map((wrap, index) => `
+  const wrapOptions = wraps.map((wrap) => `
     <label class="ribbon-option">
-      <input type="radio" name="wrap-${slug}" value="${wrap.n}" ${index === 0 ? 'checked' : ''}>
+      <input type="checkbox" name="wrap-${slug}" value="${wrap.n}" data-price="4" data-wrap-limit="2">
       <span class="color-dot" style="background:${wrap.h};${wrap.h === '#ffffff' || wrap.h === '#f8f4e8' ? 'border:1px solid #ccc;' : ''}"></span>
       <span class="ribbon-option-copy">
         <span class="ribbon-option-title">${wrap.n}</span>
         <span class="ribbon-option-note">Best paired with ${color.n.toLowerCase()} satin ribbon</span>
       </span>
+      <span class="ribbon-price-line">+${fmt(4)}</span>
     </label>
   `).join('');
 
@@ -455,7 +568,7 @@ function renderRibbonDetail(colorName) {
       <input type="checkbox" name="mesh-${slug}" value="mesh" data-price="8">
       <span class="ribbon-option-copy">
         <span class="ribbon-option-title">Black mesh pearl wrap</span>
-        <span class="ribbon-option-note">Add over the floral wrap for a fuller finished bouquet</span>
+        <span class="ribbon-option-note">Add over the floral wraps for a fuller finished bouquet</span>
       </span>
       <span class="ribbon-price-line">+${fmt(8)}</span>
     </label>
@@ -532,17 +645,164 @@ function renderRibbonDetail(colorName) {
   `;
 }
 
+function renderSingleRoseDetail() {
+  const detail = document.getElementById('ribbon-shop-detail');
+  if (!detail) return;
+
+  const roseOptions = RIBBON_COLORS.map((color, index) => `
+    <label class="ribbon-option">
+      <input type="radio" name="single-rose-color" value="${color.n}" ${index === 0 ? 'checked' : ''}>
+      <span class="color-dot" style="background:${color.h};${color.h === '#ffffff' || color.h === '#f8f4e8' ? 'border:1px solid #ccc;' : ''}"></span>
+      <span class="ribbon-option-copy">
+        <span class="ribbon-option-title">${color.n}</span>
+        <span class="ribbon-option-note">Choose your satin ribbon rose color</span>
+      </span>
+    </label>
+  `).join('');
+
+  const bearOptions = BEAR_COLORS.map((color, index) => `
+    <label class="ribbon-option">
+      <input type="radio" name="single-bear-color" value="${color.n}" ${index === 0 ? 'checked' : ''}>
+      <span class="color-dot" style="background:${color.h};"></span>
+      <span class="ribbon-option-copy">
+        <span class="ribbon-option-title">${color.n}</span>
+        <span class="ribbon-option-note">Pick one keychain bear color</span>
+      </span>
+    </label>
+  `).join('');
+
+  const wrapOptions = WRAP_COLORS.map((wrap) => `
+    <label class="ribbon-option">
+      <input type="radio" name="single-wrap" value="${wrap.n}" data-price="4">
+      <span class="color-dot" style="background:${wrap.h};${wrap.h === '#ffffff' || wrap.h === '#f8f4e8' ? 'border:1px solid #ccc;' : ''}"></span>
+      <span class="ribbon-option-copy">
+        <span class="ribbon-option-title">${wrap.n}</span>
+        <span class="ribbon-option-note">Choose one floral wrap color</span>
+      </span>
+      <span class="ribbon-price-line">+${fmt(4)}</span>
+    </label>
+  `).join('');
+
+  detail.innerHTML = `
+    <article class="ribbon-card" data-ribbon-card="single-rose-bear" data-base-price="13">
+      <div class="ribbon-card-header">
+        <div class="ribbon-card-hero ribbon-feature-visual">
+          <span class="ribbon-card-image-tag">Future product photo</span>
+          <div class="single-rose-showcase modal-single-rose">
+            <div class="single-rose-stem"></div>
+            <div class="single-rose-bloom"></div>
+            <div class="single-bear-tag">Keychain Bear</div>
+          </div>
+        </div>
+        <div class="ribbon-card-summary">
+          <div class="ribbon-card-topline">
+            <span class="ribbon-card-dot" style="background:#f4b8c8;"></span>
+            <span id="ribbon-modal-title">Signature Add-On</span>
+          </div>
+          <h3 class="ribbon-card-title">Single Rose + Keychain Bear</h3>
+          <p class="ribbon-card-copy">A single satin ribbon rose paired with a keychain bear, one floral wrap, and an optional diamond pushpin.</p>
+          <div class="ribbon-card-starting">
+            <span class="ribbon-card-starting-label">Starting at</span>
+            <span class="ribbon-card-starting-price">${fmt(13)}</span>
+          </div>
+        </div>
+      </div>
+
+      <fieldset class="ribbon-fieldset">
+        <legend>Choose Rose Color</legend>
+        <div class="ribbon-option-list compact-option-list">${roseOptions}</div>
+      </fieldset>
+
+      <fieldset class="ribbon-fieldset">
+        <legend>Choose Bear Color</legend>
+        <div class="ribbon-option-list">${bearOptions}</div>
+      </fieldset>
+
+      <fieldset class="ribbon-fieldset">
+        <legend>Choose One Floral Wrap</legend>
+        <div class="ribbon-option-list compact-option-list">
+          <label class="ribbon-option">
+            <input type="radio" name="single-wrap" value="No floral wrap" data-price="0" checked>
+            <span class="ribbon-option-copy">
+              <span class="ribbon-option-title">No floral wrap</span>
+              <span class="ribbon-option-note">Keep the rose simple and unwrapped</span>
+            </span>
+          </label>
+          ${wrapOptions}
+        </div>
+      </fieldset>
+
+      <fieldset class="ribbon-fieldset">
+        <legend>Add On</legend>
+        <div class="ribbon-option-list">
+          <label class="ribbon-option">
+            <input type="checkbox" name="single-diamond" value="Diamond push pin" data-price="4">
+            <span class="ribbon-option-copy">
+              <span class="ribbon-option-title">1 Diamond pushpin</span>
+              <span class="ribbon-option-note">A small sparkle detail for the finished bouquet</span>
+            </span>
+            <span class="ribbon-price-line">+${fmt(4)}</span>
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset class="ribbon-fieldset">
+        <legend>Delivery Option</legend>
+        <div class="ribbon-option-list">
+          <label class="ribbon-option">
+            <input type="radio" name="single-delivery" value="Pickup" data-price="0" checked>
+            <span class="ribbon-option-copy">
+              <span class="ribbon-option-title">Pickup</span>
+              <span class="ribbon-option-note">Arrange pickup time after ordering</span>
+            </span>
+          </label>
+          <label class="ribbon-option">
+            <input type="radio" name="single-delivery" value="Local Delivery" data-price="15">
+            <span class="ribbon-option-copy">
+              <span class="ribbon-option-title">Local Delivery (+$15)</span>
+              <span class="ribbon-option-note">Available for nearby local delivery</span>
+            </span>
+          </label>
+        </div>
+      </fieldset>
+
+      <div class="ribbon-card-footer">
+        <div class="ribbon-total">
+          <span class="ribbon-total-label">Estimated total</span>
+          <span class="ribbon-total-price" data-ribbon-total="single-rose-bear">${fmt(13)}</span>
+        </div>
+        <button class="btn btn-primary ribbon-order-btn" type="button" data-ribbon-order="single-rose-bear">Order Now</button>
+        <p class="ribbon-meta">Each item is handmade. Slight variations may occur.<br>Ready in up to 5 days.</p>
+      </div>
+    </article>
+  `;
+}
+
 function calculateRibbonCardTotal(card) {
+  if (card.dataset.ribbonCard === 'single-rose-bear') {
+    const basePrice = Number(card.dataset.basePrice || 13);
+    const wrapPrice = Number(card.querySelector('input[name="single-wrap"]:checked')?.dataset.price || 0);
+    const diamondPrice = Number(card.querySelector('input[name="single-diamond"]:checked')?.dataset.price || 0);
+    const deliveryPrice = Number(card.querySelector('input[name="single-delivery"]:checked')?.dataset.price || 0);
+    const totalNode = card.querySelector('[data-ribbon-total]');
+    if (totalNode) totalNode.textContent = fmt(basePrice + wrapPrice + diamondPrice + deliveryPrice);
+    return;
+  }
+
   const selectedSize = card.querySelector('input[name^="size-"]:checked');
   const selectedDelivery = card.querySelector('input[name^="delivery-"]:checked');
   const extraInputs = card.querySelectorAll('input[name^="extra-"]:checked');
   const meshInput = card.querySelector('input[name^="mesh-"]:checked');
+  const wrapInputs = card.querySelectorAll('input[name^="wrap-"]:checked');
 
   let total = Number(selectedSize?.dataset.price || 0) + Number(selectedDelivery?.dataset.price || 0);
   extraInputs.forEach((input) => {
     total += Number(input.dataset.price || 0);
   });
   total += Number(meshInput?.dataset.price || 0);
+  wrapInputs.forEach((input) => {
+    total += Number(input.dataset.price || 0);
+  });
 
   const totalNode = card.querySelector('[data-ribbon-total]');
   if (totalNode) totalNode.textContent = fmt(total);
@@ -560,7 +820,11 @@ function attachRibbonShopEvents() {
       const color = RIBBON_COLORS.find((entry) => slugify(entry.n) === slug);
       document.querySelectorAll('[data-ribbon-trigger]').forEach((item) => item.classList.remove('active'));
       card.classList.add('active');
-      renderRibbonDetail(color?.n || RIBBON_COLORS[0].n);
+      if (slug === 'single-rose-bear') {
+        renderSingleRoseDetail();
+      } else {
+        renderRibbonDetail(color?.n || RIBBON_COLORS[0].n);
+      }
       if (modal) {
         modal.classList.remove('hidden');
         modal.setAttribute('aria-hidden', 'false');
@@ -603,16 +867,34 @@ function attachRibbonShopEvents() {
     card.querySelectorAll('input').forEach((input) => {
       if (input.dataset.bound === 'true') return;
       input.dataset.bound = 'true';
-      input.addEventListener('change', () => calculateRibbonCardTotal(card));
+      input.addEventListener('change', () => {
+        if (input.dataset.wrapLimit) {
+          const limit = Number(input.dataset.wrapLimit);
+          const checkedWraps = card.querySelectorAll(`input[name="${input.name}"]:checked`);
+          if (checkedWraps.length > limit) {
+            input.checked = false;
+            showToast(`You can choose up to ${limit} floral wraps.`);
+          }
+        }
+        calculateRibbonCardTotal(card);
+      });
     });
 
     const orderButton = card.querySelector('[data-ribbon-order]');
     if (orderButton && orderButton.dataset.bound !== 'true') {
       orderButton.dataset.bound = 'true';
       orderButton.addEventListener('click', () => {
+        if (card.dataset.ribbonCard === 'single-rose-bear') {
+          const roseColor = card.querySelector('input[name="single-rose-color"]:checked')?.value || 'Rose color';
+          const bearColor = card.querySelector('input[name="single-bear-color"]:checked')?.value || 'Bear color';
+          const wrap = card.querySelector('input[name="single-wrap"]:checked')?.value || 'No floral wrap';
+          const delivery = card.querySelector('input[name="single-delivery"]:checked')?.value || 'Pickup';
+          showToast(`Single Rose + Bear saved: ${roseColor}, ${bearColor}, ${wrap}, ${delivery}.`);
+          return;
+        }
         const ribbonName = card.querySelector('.ribbon-card-title')?.textContent || 'bouquet';
         const size = card.querySelector('input[name^="size-"]:checked')?.closest('.ribbon-option')?.querySelector('.ribbon-option-title')?.textContent || 'Custom size';
-        const wrap = card.querySelector('input[name^="wrap-"]:checked')?.value || 'recommended wrap';
+        const wrap = Array.from(card.querySelectorAll('input[name^="wrap-"]:checked')).map((input) => input.value).join(', ') || 'No floral wrap selected';
         const delivery = card.querySelector('input[name^="delivery-"]:checked')?.closest('.ribbon-option')?.querySelector('.ribbon-option-title')?.textContent || 'Pickup';
         showToast(`${ribbonName} bouquet saved: ${size}, ${wrap} wrap, ${delivery}.`);
       });
@@ -629,7 +911,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Build color grids if on order page
   buildColorGrid('ribbon-grid', RIBBON_COLORS, 'ribbon');
-  buildColorGrid('wrap-grid',   WRAP_COLORS,   'wrap');
+  buildWrapGrid();
   syncOrderRangeToTier(currentTier);
   renderRibbonShop();
 

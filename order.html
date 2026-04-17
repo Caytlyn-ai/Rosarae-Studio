@@ -23,7 +23,13 @@
   </nav>
 
   <section class="section">
-    <div class="form-section">
+    <form class="form-section order-form" name="custom-order" method="POST" data-netlify="true" onsubmit="submitOrderForm(event)">
+      <input type="hidden" name="form-name" value="custom-order" />
+      <input type="hidden" name="subject" value="New custom order request from Rosarae Studio" />
+      <input type="hidden" name="selected_tier" id="selected-tier" value="small" />
+      <input type="hidden" name="ribbon" value="" />
+      <input type="hidden" name="wrap" value="" />
+      <input type="hidden" name="bear_color" value="" />
       <a href="shop.html" class="back-btn">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
         Back to shop
@@ -37,8 +43,8 @@
 
       <div class="section-label">Your info</div>
       <div class="form-grid-2">
-        <div class="field"><label for="o-name">Name</label><input type="text" id="o-name" placeholder="Your name" /></div>
-        <div class="field"><label for="o-email">Email</label><input type="email" id="o-email" placeholder="you@email.com" /></div>
+        <div class="field"><label for="o-name">Name</label><input type="text" id="o-name" name="name" placeholder="Your name" required /></div>
+        <div class="field"><label for="o-email">Email</label><input type="email" id="o-email" name="email" placeholder="you@email.com" required /></div>
       </div>
 
       <div class="section-label">Bouquet size</div>
@@ -52,7 +58,7 @@
         <div class="field">
           <label for="order-rose-range">Number of roses</label>
           <div class="rose-count-row">
-            <input type="range" min="1" max="9" value="5" step="1" id="order-rose-range" oninput="updR()" />
+            <input type="range" min="1" max="9" value="5" step="1" id="order-rose-range" name="rose_count" oninput="updR()" />
             <span class="rose-val" id="order-rose-value">5</span>
             <span style="font-size:13px;color:#9e9b96;">roses</span>
           </div>
@@ -66,7 +72,7 @@
 
       <div class="section-label">Occasion ribbon</div>
       <div class="field" style="margin-bottom:1.25rem;">
-        <select id="o-occ-ribbon" onchange="calcOrder()">
+        <select id="o-occ-ribbon" name="occasion_ribbon" onchange="calcOrder()">
           <option value="">None</option>
           <option value="15">Black "Happy Birthday" satin ribbon - $15</option>
           <option value="15">Light Blue "Happy Birthday" satin ribbon - $15</option>
@@ -81,30 +87,30 @@
       <div class="section-label">Floral wrap</div>
       <div class="color-grid" id="wrap-grid"></div>
       <div class="addon-grid" style="margin-bottom:1.25rem;">
-        <label class="addon-check"><input type="checkbox" id="o-mesh" onchange="calcOrder()" /> Black mesh pearl wrap <span class="addon-price">+$8.00</span></label>
+        <label class="addon-check"><input type="checkbox" id="o-mesh" name="mesh_wrap" value="Black mesh pearl wrap" onchange="calcOrder()" /> Black mesh pearl wrap <span class="addon-price">+$8.00</span></label>
       </div>
 
       <div class="section-label">Add-ons</div>
       <div class="addon-grid">
-        <label class="addon-check"><input type="checkbox" id="o-bear" onchange="calcOrder()" /> Bear <span class="addon-price">+$10.00</span></label>
-        <label class="addon-check"><input type="checkbox" id="o-diamonds" onchange="calcOrder()" /> Diamond push pins <span class="addon-price">+$4.00</span></label>
-        <label class="addon-check"><input type="checkbox" id="o-rush" onchange="calcOrder()" /> Rush order <span class="addon-price">+$20.00</span></label>
+        <label class="addon-check"><input type="checkbox" id="o-bear" name="add_bear" value="Bear" onchange="calcOrder()" /> Bear <span class="addon-price">+$10.00</span></label>
+        <label class="addon-check"><input type="checkbox" id="o-diamonds" name="diamond_push_pins" value="Diamond push pins" onchange="calcOrder()" /> Diamond push pins <span class="addon-price">+$4.00</span></label>
+        <label class="addon-check"><input type="checkbox" id="o-rush" name="rush_order" value="Rush order" onchange="calcOrder()" /> Rush order <span class="addon-price">+$20.00</span></label>
       </div>
       <div id="rush-note" style="display:none;font-size:12px;color:#5f5e5a;margin-bottom:.75rem;line-height:1.6;">Rush orders completed in 1-1.5 weeks. Regular orders may take 2 weeks or longer.</div>
 
       <div id="bear-colors" style="display:none;">
         <div style="font-size:13px;color:#5f5e5a;margin-bottom:6px;">Bear color</div>
         <div class="color-grid" style="grid-template-columns:repeat(auto-fill,minmax(140px,1fr));margin-bottom:1rem;">
-          <label class="color-opt"><input type="radio" name="bear" value="Pink" /> <span class="color-dot" style="background:#f4b8c8;"></span>Pink</label>
-          <label class="color-opt"><input type="radio" name="bear" value="Blue/White" /> <span class="color-dot" style="background:#b8d4f0;"></span>Blue / White</label>
-          <label class="color-opt"><input type="radio" name="bear" value="Cream" /> <span class="color-dot" style="background:#f5ecd7;"></span>Cream</label>
-          <label class="color-opt"><input type="radio" name="bear" value="Brown" /> <span class="color-dot" style="background:#a07850;"></span>Brown</label>
+          <label class="color-opt"><input type="radio" name="bear_color" value="Pink" /> <span class="color-dot" style="background:#f4b8c8;"></span>Pink</label>
+          <label class="color-opt"><input type="radio" name="bear_color" value="Blue/White" /> <span class="color-dot" style="background:#b8d4f0;"></span>Blue / White</label>
+          <label class="color-opt"><input type="radio" name="bear_color" value="Cream" /> <span class="color-dot" style="background:#f5ecd7;"></span>Cream</label>
+          <label class="color-opt"><input type="radio" name="bear_color" value="Brown" /> <span class="color-dot" style="background:#a07850;"></span>Brown</label>
         </div>
       </div>
 
       <div class="section-label">Occasion &amp; notes</div>
-      <div class="field"><label for="o-occasion">Occasion</label><select id="o-occasion"><option>Birthday</option><option>Wedding</option><option>Anniversary</option><option>Mother's Day</option><option>Valentine's Day</option><option>Home decor</option><option>Gift</option><option>Other</option></select></div>
-      <div class="field"><label for="o-notes">Anything else I should know</label><textarea id="o-notes" placeholder="Deadline, color combos, special requests, inspo photos..."></textarea></div>
+      <div class="field"><label for="o-occasion">Occasion</label><select id="o-occasion" name="occasion"><option>Birthday</option><option>Wedding</option><option>Anniversary</option><option>Mother's Day</option><option>Valentine's Day</option><option>Home decor</option><option>Gift</option><option>Other</option></select></div>
+      <div class="field"><label for="o-notes">Anything else I should know</label><textarea id="o-notes" name="notes" placeholder="Deadline, color combos, special requests, inspo photos..."></textarea></div>
 
       <div class="price-summary">
         <div class="price-row" id="op-rose-row"><span>5 roses x $2.50</span><span>$12.50</span></div>
@@ -116,8 +122,8 @@
         <strong>Payment via CashApp</strong> - After I confirm your order by email, send payment to <a href="https://cash.app/$SissyLuv1" target="_blank" rel="noopener"><strong>$SissyLuv101</strong></a>.
       </div>
 
-      <button class="btn btn-primary btn-full" style="margin-top:1.25rem;padding:15px;" onclick="submitOrderForm()">Send My Order Request</button>
-    </div>
+      <button class="btn btn-primary btn-full" style="margin-top:1.25rem;padding:15px;" type="submit">Send My Order Request</button>
+    </form>
   </section>
 
   <footer>

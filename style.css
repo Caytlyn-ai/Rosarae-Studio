@@ -274,6 +274,10 @@ h3 { font-size: clamp(18px, 2.5vw, 22px); }
   margin: 0 auto 2rem;
 }
 
+.gallery-grid-large {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .photo-box {
   aspect-ratio: 1;
   border-radius: var(--radius-lg);
@@ -321,6 +325,10 @@ h3 { font-size: clamp(18px, 2.5vw, 22px); }
   height: 100%;
   object-fit: cover;
   transition: transform 0.4s;
+}
+
+.creator-photo {
+  object-position: center 18%;
 }
 
 .photo-box:hover img { transform: scale(1.04); }
@@ -543,20 +551,89 @@ h3 { font-size: clamp(18px, 2.5vw, 22px); }
 
 .ribbon-gallery-title {
   font-family: var(--font-serif);
-  font-size: 20px;
+  font-size: 17px;
 }
 
 .ribbon-gallery-copy {
-  font-size: 13px;
+  font-size: 11.5px;
   color: var(--text-mid);
-  line-height: 1.7;
-  margin-bottom: 0.75rem;
+  line-height: 1.55;
+  margin-bottom: 0.6rem;
 }
 
 .ribbon-gallery-price {
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--rose);
+}
+
+.ribbon-feature-visual {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.84), rgba(255,255,255,0.16)),
+    linear-gradient(135deg, #f8e6eb, #eed4db);
+}
+
+.single-rose-showcase {
+  position: absolute;
+  inset: 0;
+}
+
+.single-rose-stem {
+  position: absolute;
+  left: 50%;
+  bottom: 1.15rem;
+  width: 9px;
+  height: 104px;
+  background: linear-gradient(180deg, #6f8f5c, #49683b);
+  border-radius: 999px;
+  transform: translateX(-50%);
+}
+
+.single-rose-bloom {
+  position: absolute;
+  left: 50%;
+  bottom: 6.8rem;
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  transform: translateX(-50%);
+  background:
+    radial-gradient(circle at 50% 42%, rgba(255,255,255,0.92) 0 10%, rgba(255,255,255,0.22) 11% 30%, transparent 31%),
+    radial-gradient(circle at 28% 34%, rgba(255,255,255,0.24) 0 18%, transparent 19%),
+    radial-gradient(circle at 72% 34%, rgba(255,255,255,0.24) 0 18%, transparent 19%),
+    radial-gradient(circle at 28% 70%, rgba(255,255,255,0.18) 0 17%, transparent 18%),
+    radial-gradient(circle at 72% 70%, rgba(255,255,255,0.18) 0 17%, transparent 18%),
+    linear-gradient(180deg, rgba(255,255,255,0.22), rgba(0,0,0,0.08)),
+    #c96a7f;
+  box-shadow: 0 18px 30px rgba(0, 0, 0, 0.12);
+}
+
+.single-bear-tag {
+  position: absolute;
+  right: 0.95rem;
+  bottom: 1.1rem;
+  padding: 0.28rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.88);
+  color: var(--text-dark);
+  font-size: 8.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+}
+
+.modal-single-rose .single-rose-bloom {
+  bottom: 7.4rem;
+  width: 120px;
+  height: 120px;
+}
+
+.modal-single-rose .single-rose-stem {
+  height: 112px;
+}
+
+.compact-option-list {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
 .ribbon-modal {
@@ -1103,6 +1180,17 @@ h3 { font-size: clamp(18px, 2.5vw, 22px); }
 
 .color-opt input { accent-color: var(--rose); flex-shrink: 0; }
 
+.wrap-opt {
+  justify-content: space-between;
+}
+
+.wrap-price-tag {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--rose);
+  margin-left: auto;
+}
+
 .color-dot {
   width: 14px;
   height: 14px;
@@ -1161,9 +1249,11 @@ h3 { font-size: clamp(18px, 2.5vw, 22px); }
 
 .rose-count-row input[type=range] {
   flex: 1;
-  accent-color: var(--rose);
+  accent-color: #8f4457;
   border: none;
-  background: transparent;
+  background: linear-gradient(90deg, #8f4457, #e6c8d1);
+  height: 6px;
+  border-radius: 999px;
 }
 
 .rose-val {
@@ -1339,6 +1429,10 @@ footer a { color: var(--rose); }
     grid-template-columns: repeat(2, 1fr);
   }
 
+  .gallery-grid-large {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .social-links { gap: 0.75rem; }
 
   .social-btn { font-size: 13px; padding: 9px 14px; }
@@ -1375,6 +1469,7 @@ footer a { color: var(--rose); }
   .hero-btns { flex-direction: column; align-items: center; }
   .btn { width: 100%; text-align: center; }
   .photo-grid { grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+  .gallery-grid-large { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .product-grid { grid-template-columns: 1fr 1fr; }
   .color-grid { grid-template-columns: 1fr 1fr; }
   .ribbon-gallery-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }

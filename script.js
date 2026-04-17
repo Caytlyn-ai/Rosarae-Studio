@@ -360,99 +360,133 @@ function getRecommendedWraps(colorName) {
 
 function renderRibbonShop() {
   const grid = document.getElementById('ribbon-shop-grid');
-  if (!grid) return;
+  const detail = document.getElementById('ribbon-shop-detail');
+  if (!grid || !detail) return;
 
-  grid.innerHTML = RIBBON_COLORS.map((color) => {
+  grid.innerHTML = RIBBON_COLORS.map((color, index) => {
     const slug = slugify(color.n);
     const border = (color.h === '#ffffff' || color.h === '#f8f4e8') ? 'border:1px solid #ccc;' : '';
-    const wraps = getRecommendedWraps(color.n);
-
-    const sizeOptions = SHOP_SIZES.map((size, index) => `
-      <label class="ribbon-option">
-        <input type="radio" name="size-${slug}" value="${size.id}" data-price="${size.price}" ${index === 0 ? 'checked' : ''}>
-        <span class="ribbon-option-copy">
-          <span class="ribbon-option-title">${size.label}</span>
-          <span class="ribbon-option-note">${size.roses} hand-folded roses</span>
-        </span>
-        <span class="ribbon-price-line">${fmt(size.price)}</span>
-      </label>
-    `).join('');
-
-    const wrapOptions = wraps.map((wrap, index) => `
-      <label class="ribbon-option">
-        <input type="radio" name="wrap-${slug}" value="${wrap.n}" ${index === 0 ? 'checked' : ''}>
-        <span class="color-dot" style="background:${wrap.h};${wrap.h === '#ffffff' || wrap.h === '#f8f4e8' ? 'border:1px solid #ccc;' : ''}"></span>
-        <span class="ribbon-option-copy">
-          <span class="ribbon-option-title">${wrap.n}</span>
-          <span class="ribbon-option-note">Best paired with ${color.n.toLowerCase()} satin ribbon</span>
-        </span>
-      </label>
-    `).join('');
-
-    const extrasOptions = SHOP_EXTRAS.map((extra) => `
-      <label class="ribbon-option">
-        <input type="checkbox" name="extra-${slug}" value="${extra.id}" data-price="${extra.price}">
-        <span class="ribbon-option-copy">
-          <span class="ribbon-option-title">${extra.label}</span>
-          <span class="ribbon-option-note">Adds a special finishing detail</span>
-        </span>
-        <span class="ribbon-price-line">+${fmt(extra.price)}</span>
-      </label>
-    `).join('');
-
-    const deliveryOptions = DELIVERY_OPTIONS.map((option, index) => `
-      <label class="ribbon-option">
-        <input type="radio" name="delivery-${slug}" value="${option.id}" data-price="${option.price}" ${index === 0 ? 'checked' : ''}>
-        <span class="ribbon-option-copy">
-          <span class="ribbon-option-title">${option.label}${option.price ? ` (+$${option.price})` : ''}</span>
-          <span class="ribbon-option-note">${option.id === 'pickup' ? 'Arrange a pickup time after ordering' : 'Available for nearby local delivery'}</span>
-        </span>
-      </label>
-    `).join('');
-
     return `
-      <article class="ribbon-card" data-ribbon-card="${slug}">
-        <div class="ribbon-card-header">
-          <span class="ribbon-card-dot" style="background:${color.h};${border}"></span>
-          <div>
-            <h3 class="ribbon-card-title">${color.n}</h3>
-            <p class="ribbon-card-copy">${getRibbonDescription(color.n)}</p>
-          </div>
+      <article class="ribbon-gallery-card ${index === 0 ? 'active' : ''}" data-ribbon-trigger="${slug}">
+        <div class="ribbon-gallery-visual" style="background-color:${color.h};">
+          <div class="ribbon-gallery-bloom" style="background:
+            radial-gradient(circle at 50% 42%, rgba(255,255,255,0.92) 0 10%, rgba(255,255,255,0.22) 11% 30%, transparent 31%),
+            radial-gradient(circle at 28% 34%, rgba(255,255,255,0.24) 0 18%, transparent 19%),
+            radial-gradient(circle at 72% 34%, rgba(255,255,255,0.24) 0 18%, transparent 19%),
+            radial-gradient(circle at 28% 70%, rgba(255,255,255,0.18) 0 17%, transparent 18%),
+            radial-gradient(circle at 72% 70%, rgba(255,255,255,0.18) 0 17%, transparent 18%),
+            linear-gradient(180deg, rgba(255,255,255,0.22), rgba(0,0,0,0.08)),
+            ${color.h};"></div>
+          <div class="ribbon-gallery-stem"></div>
         </div>
-
-        <fieldset class="ribbon-fieldset">
-          <legend>Select Size</legend>
-          <div class="ribbon-option-list">${sizeOptions}</div>
-        </fieldset>
-
-        <fieldset class="ribbon-fieldset">
-          <legend>Choose Wrap Style</legend>
-          <div class="ribbon-option-list">${wrapOptions}</div>
-        </fieldset>
-
-        <fieldset class="ribbon-fieldset">
-          <legend>Add Extras</legend>
-          <div class="ribbon-option-list">${extrasOptions}</div>
-        </fieldset>
-
-        <fieldset class="ribbon-fieldset">
-          <legend>Delivery Option</legend>
-          <div class="ribbon-option-list">${deliveryOptions}</div>
-        </fieldset>
-
-        <div class="ribbon-card-footer">
-          <div class="ribbon-total">
-            <span class="ribbon-total-label">Estimated total</span>
-            <span class="ribbon-total-price" data-ribbon-total="${slug}">${fmt(SHOP_SIZES[0].price)}</span>
+        <div class="ribbon-gallery-content">
+          <div class="ribbon-gallery-title-row">
+            <span class="ribbon-card-dot" style="background:${color.h};${border}"></span>
+            <h3 class="ribbon-gallery-title">${color.n}</h3>
           </div>
-          <button class="btn btn-primary ribbon-order-btn" type="button" data-ribbon-order="${slug}">Order Now</button>
-          <p class="ribbon-meta">Each bouquet is handmade. Slight variations may occur.<br>Ready in up to 5 days.</p>
+          <p class="ribbon-gallery-copy">${getRibbonDescription(color.n)}</p>
         </div>
       </article>
     `;
   }).join('');
 
+  detail.innerHTML = '<div class="ribbon-detail-empty">Select a ribbon color to see bouquet sizes, wrap pairings, extras, and delivery options.</div>';
+  renderRibbonDetail(RIBBON_COLORS[0].n);
   attachRibbonShopEvents();
+}
+
+function renderRibbonDetail(colorName) {
+  const detail = document.getElementById('ribbon-shop-detail');
+  if (!detail) return;
+
+  const color = RIBBON_COLORS.find((entry) => entry.n === colorName) || RIBBON_COLORS[0];
+  const slug = slugify(color.n);
+  const border = (color.h === '#ffffff' || color.h === '#f8f4e8') ? 'border:1px solid #ccc;' : '';
+  const wraps = getRecommendedWraps(color.n);
+
+  const sizeOptions = SHOP_SIZES.map((size, index) => `
+    <label class="ribbon-option">
+      <input type="radio" name="size-${slug}" value="${size.id}" data-price="${size.price}" ${index === 0 ? 'checked' : ''}>
+      <span class="ribbon-option-copy">
+        <span class="ribbon-option-title">${size.label}</span>
+        <span class="ribbon-option-note">${size.roses} hand-folded roses</span>
+      </span>
+      <span class="ribbon-price-line">${fmt(size.price)}</span>
+    </label>
+  `).join('');
+
+  const wrapOptions = wraps.map((wrap, index) => `
+    <label class="ribbon-option">
+      <input type="radio" name="wrap-${slug}" value="${wrap.n}" ${index === 0 ? 'checked' : ''}>
+      <span class="color-dot" style="background:${wrap.h};${wrap.h === '#ffffff' || wrap.h === '#f8f4e8' ? 'border:1px solid #ccc;' : ''}"></span>
+      <span class="ribbon-option-copy">
+        <span class="ribbon-option-title">${wrap.n}</span>
+        <span class="ribbon-option-note">Best paired with ${color.n.toLowerCase()} satin ribbon</span>
+      </span>
+    </label>
+  `).join('');
+
+  const extrasOptions = SHOP_EXTRAS.map((extra) => `
+    <label class="ribbon-option">
+      <input type="checkbox" name="extra-${slug}" value="${extra.id}" data-price="${extra.price}">
+      <span class="ribbon-option-copy">
+        <span class="ribbon-option-title">${extra.label}</span>
+        <span class="ribbon-option-note">Adds a special finishing detail</span>
+      </span>
+      <span class="ribbon-price-line">+${fmt(extra.price)}</span>
+    </label>
+  `).join('');
+
+  const deliveryOptions = DELIVERY_OPTIONS.map((option, index) => `
+    <label class="ribbon-option">
+      <input type="radio" name="delivery-${slug}" value="${option.id}" data-price="${option.price}" ${index === 0 ? 'checked' : ''}>
+      <span class="ribbon-option-copy">
+        <span class="ribbon-option-title">${option.label}${option.price ? ` (+$${option.price})` : ''}</span>
+        <span class="ribbon-option-note">${option.id === 'pickup' ? 'Arrange a pickup time after ordering' : 'Available for nearby local delivery'}</span>
+      </span>
+    </label>
+  `).join('');
+
+  detail.innerHTML = `
+    <article class="ribbon-card" data-ribbon-card="${slug}">
+      <div class="ribbon-card-header">
+        <span class="ribbon-card-dot" style="background:${color.h};${border}"></span>
+        <div>
+          <h3 class="ribbon-card-title">${color.n}</h3>
+          <p class="ribbon-card-copy">${getRibbonDescription(color.n)}</p>
+        </div>
+      </div>
+
+      <fieldset class="ribbon-fieldset">
+        <legend>Select Size</legend>
+        <div class="ribbon-option-list">${sizeOptions}</div>
+      </fieldset>
+
+      <fieldset class="ribbon-fieldset">
+        <legend>Choose Wrap Style</legend>
+        <div class="ribbon-option-list">${wrapOptions}</div>
+      </fieldset>
+
+      <fieldset class="ribbon-fieldset">
+        <legend>Add Extras</legend>
+        <div class="ribbon-option-list">${extrasOptions}</div>
+      </fieldset>
+
+      <fieldset class="ribbon-fieldset">
+        <legend>Delivery Option</legend>
+        <div class="ribbon-option-list">${deliveryOptions}</div>
+      </fieldset>
+
+      <div class="ribbon-card-footer">
+        <div class="ribbon-total">
+          <span class="ribbon-total-label">Estimated total</span>
+          <span class="ribbon-total-price" data-ribbon-total="${slug}">${fmt(SHOP_SIZES[0].price)}</span>
+        </div>
+        <button class="btn btn-primary ribbon-order-btn" type="button" data-ribbon-order="${slug}">Order Now</button>
+        <p class="ribbon-meta">Each bouquet is handmade. Slight variations may occur.<br>Ready in up to 5 days.</p>
+      </div>
+    </article>
+  `;
 }
 
 function calculateRibbonCardTotal(card) {
@@ -470,13 +504,29 @@ function calculateRibbonCardTotal(card) {
 }
 
 function attachRibbonShopEvents() {
+  document.querySelectorAll('[data-ribbon-trigger]').forEach((card) => {
+    if (card.dataset.bound === 'true') return;
+    card.dataset.bound = 'true';
+    card.addEventListener('click', () => {
+      const slug = card.getAttribute('data-ribbon-trigger');
+      const color = RIBBON_COLORS.find((entry) => slugify(entry.n) === slug);
+      document.querySelectorAll('[data-ribbon-trigger]').forEach((item) => item.classList.remove('active'));
+      card.classList.add('active');
+      renderRibbonDetail(color?.n || RIBBON_COLORS[0].n);
+      attachRibbonShopEvents();
+    });
+  });
+
   document.querySelectorAll('[data-ribbon-card]').forEach((card) => {
     card.querySelectorAll('input').forEach((input) => {
+      if (input.dataset.bound === 'true') return;
+      input.dataset.bound = 'true';
       input.addEventListener('change', () => calculateRibbonCardTotal(card));
     });
 
     const orderButton = card.querySelector('[data-ribbon-order]');
-    if (orderButton) {
+    if (orderButton && orderButton.dataset.bound !== 'true') {
+      orderButton.dataset.bound = 'true';
       orderButton.addEventListener('click', () => {
         const ribbonName = card.querySelector('.ribbon-card-title')?.textContent || 'bouquet';
         const size = card.querySelector('input[name^="size-"]:checked')?.closest('.ribbon-option')?.querySelector('.ribbon-option-title')?.textContent || 'Custom size';

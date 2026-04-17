@@ -91,14 +91,21 @@
   <section class="section section-alt">
     <div class="container">
       <h2 class="section-title">Ribbon Color Checkout</h2>
-      <p class="section-sub">Click a bouquet color to open its checkout options.</p>
+      <p class="section-sub">Browse bouquet colors, then click a card to open the full checkout details.</p>
       <hr class="divider" />
       <div class="ribbon-shop-experience fade-in">
         <div class="ribbon-gallery-grid" id="ribbon-shop-grid"></div>
-        <div class="ribbon-detail-shell" id="ribbon-shop-detail"></div>
       </div>
     </div>
   </section>
+
+  <div class="ribbon-modal hidden" id="ribbon-shop-modal" aria-hidden="true">
+    <div class="ribbon-modal-backdrop" data-ribbon-close></div>
+    <div class="ribbon-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="ribbon-modal-title">
+      <button class="ribbon-modal-close" type="button" aria-label="Close bouquet details" data-ribbon-close>&times;</button>
+      <div class="ribbon-modal-body" id="ribbon-shop-detail"></div>
+    </div>
+  </div>
 
   <footer>
     &copy; 2026 Rosarae Studio &nbsp;&middot;&nbsp; Handmade with love

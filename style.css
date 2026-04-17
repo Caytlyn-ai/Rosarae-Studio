@@ -357,16 +357,13 @@ h3 { font-size: clamp(18px, 2.5vw, 22px); }
 }
 
 .ribbon-shop-experience {
-  display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
-  gap: 1.5rem;
-  align-items: start;
+  display: block;
 }
 
 .ribbon-gallery-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.35rem;
 }
 
 .ribbon-gallery-card {
@@ -386,24 +383,50 @@ h3 { font-size: clamp(18px, 2.5vw, 22px); }
 }
 
 .ribbon-gallery-visual {
-  aspect-ratio: 4 / 4.8;
+  aspect-ratio: 4 / 4.7;
   background:
-    radial-gradient(circle at 50% 22%, rgba(255,255,255,0.92) 0, rgba(255,255,255,0.22) 20%, transparent 21%),
-    radial-gradient(circle at 34% 42%, rgba(255,255,255,0.18) 0, rgba(255,255,255,0.08) 16%, transparent 17%),
-    radial-gradient(circle at 64% 42%, rgba(255,255,255,0.18) 0, rgba(255,255,255,0.08) 16%, transparent 17%),
-    linear-gradient(180deg, rgba(255,255,255,0.22), rgba(0,0,0,0.08));
-  display: flex;
-  align-items: center;
-  justify-content: center;
+    linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,255,255,0.12)),
+    radial-gradient(circle at top, rgba(255,255,255,0.42), transparent 46%);
   position: relative;
   overflow: hidden;
+  padding: 0.9rem;
+}
+
+.ribbon-gallery-frame {
+  width: 100%;
+  height: 100%;
+  border-radius: calc(var(--radius-lg) - 4px);
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.26), rgba(0,0,0,0.1)),
+    radial-gradient(circle at top, rgba(255,255,255,0.28), transparent 42%);
+  border: 1px solid rgba(255,255,255,0.55);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18);
+}
+
+.ribbon-gallery-frame::before {
+  content: "Bouquet photo coming soon";
+  position: absolute;
+  top: 0.95rem;
+  right: 0.95rem;
+  padding: 0.28rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.76);
+  color: var(--text-mid);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .ribbon-gallery-bloom {
-  width: 118px;
-  height: 118px;
+  position: absolute;
+  left: 50%;
+  bottom: 2.7rem;
+  width: 128px;
+  height: 128px;
   border-radius: 50%;
-  position: relative;
+  transform: translateX(-50%);
   box-shadow: 0 18px 30px rgba(0, 0, 0, 0.12);
 }
 
@@ -427,11 +450,32 @@ h3 { font-size: clamp(18px, 2.5vw, 22px); }
 
 .ribbon-gallery-stem {
   position: absolute;
-  bottom: 16px;
+  left: 50%;
+  bottom: 1rem;
   width: 10px;
   height: 82px;
   background: linear-gradient(180deg, #6f8f5c, #49683b);
   border-radius: 999px;
+  transform: translateX(-50%);
+}
+
+.ribbon-gallery-overlay {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: 2.7rem 1rem 0.9rem;
+  background: linear-gradient(180deg, rgba(255,255,255,0), rgba(34,34,34,0.2));
+}
+
+.ribbon-gallery-zoom {
+  width: fit-content;
+  margin-left: auto;
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.82);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dark);
 }
 
 .ribbon-gallery-content {
@@ -462,38 +506,201 @@ h3 { font-size: clamp(18px, 2.5vw, 22px); }
   font-size: 13px;
   color: var(--text-mid);
   line-height: 1.7;
+  margin-bottom: 0.75rem;
 }
 
-.ribbon-detail-shell {
-  position: sticky;
-  top: 92px;
+.ribbon-gallery-price {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--rose);
+}
+
+.ribbon-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.ribbon-modal.hidden {
+  display: none;
+}
+
+.ribbon-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(39, 26, 30, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.ribbon-modal-dialog {
+  position: relative;
+  width: min(720px, 100%);
+  max-height: calc(100vh - 3rem);
+  overflow: auto;
+  border-radius: 22px;
+  background: var(--white);
+  box-shadow: 0 24px 60px rgba(57, 35, 40, 0.22);
+}
+
+.ribbon-modal-body {
+  padding: 1.25rem;
+}
+
+.ribbon-modal-close {
+  position: absolute;
+  top: 0.85rem;
+  right: 0.9rem;
+  z-index: 2;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.92);
+  color: var(--text-dark);
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
 }
 
 .ribbon-card {
   background: var(--white);
-  border: 0.5px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 1.25rem;
-  box-shadow: var(--shadow);
+  border: 0;
+  border-radius: 18px;
+  padding: 1rem;
+  box-shadow: none;
 }
 
 .ribbon-card-header {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.ribbon-card-hero {
+  position: relative;
+  min-height: 260px;
+  border-radius: 18px;
+  overflow: hidden;
+  padding: 1rem;
+  border: 1px solid rgba(255,255,255,0.45);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12);
+}
+
+.ribbon-card-hero::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 44%;
+  background: linear-gradient(180deg, rgba(255,255,255,0), rgba(34,34,34,0.16));
+}
+
+.ribbon-card-image-tag {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  z-index: 1;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.76);
+  color: var(--text-mid);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ribbon-card-bloom {
+  position: absolute;
+  left: 50%;
+  bottom: 3rem;
+  width: 144px;
+  height: 144px;
+  border-radius: 50%;
+  transform: translateX(-50%);
+  box-shadow: 0 18px 30px rgba(0, 0, 0, 0.12);
+}
+
+.ribbon-card-bloom::before,
+.ribbon-card-bloom::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+}
+
+.ribbon-card-bloom::before {
+  transform: rotate(30deg) scale(0.82);
+  background: radial-gradient(circle, rgba(255,255,255,0.82) 0, rgba(255,255,255,0.08) 48%, transparent 49%);
+}
+
+.ribbon-card-bloom::after {
+  transform: rotate(-28deg) scale(1.08);
+  background: radial-gradient(circle, transparent 0, transparent 42%, rgba(255,255,255,0.2) 43%, rgba(255,255,255,0) 58%);
+}
+
+.ribbon-card-stem {
+  position: absolute;
+  left: 50%;
+  bottom: 1.2rem;
+  width: 10px;
+  height: 92px;
+  background: linear-gradient(180deg, #6f8f5c, #49683b);
+  border-radius: 999px;
+  transform: translateX(-50%);
+}
+
+.ribbon-card-summary {
   display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.ribbon-card-topline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 0.6rem;
+  font-size: 11px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--rose);
 }
 
 .ribbon-card-title {
   font-family: var(--font-serif);
-  font-size: 22px;
-  margin-bottom: 0.15rem;
+  font-size: 28px;
+  margin-bottom: 0.25rem;
 }
 
 .ribbon-card-copy {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text-mid);
   line-height: 1.7;
+  margin-bottom: 0.85rem;
+}
+
+.ribbon-card-starting {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.ribbon-card-starting-label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-light);
+}
+
+.ribbon-card-starting-price {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--rose);
 }
 
 .ribbon-detail-empty {
@@ -1051,15 +1258,27 @@ footer a { color: var(--rose); }
   }
 
   .ribbon-shop-experience {
-    grid-template-columns: 1fr;
+    display: block;
   }
 
   .ribbon-gallery-grid {
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  }
+
+  .ribbon-modal {
+    padding: 0.75rem;
+  }
+
+  .ribbon-modal-dialog {
+    max-height: calc(100vh - 1.5rem);
+  }
+
+  .ribbon-card-header {
     grid-template-columns: 1fr;
   }
 
-  .ribbon-detail-shell {
-    position: static;
+  .ribbon-card-hero {
+    min-height: 220px;
   }
 
   .photo-grid {
@@ -1077,4 +1296,7 @@ footer a { color: var(--rose); }
   .photo-grid { grid-template-columns: 1fr 1fr; gap: 0.75rem; }
   .product-grid { grid-template-columns: 1fr 1fr; }
   .color-grid { grid-template-columns: 1fr 1fr; }
+  .ribbon-gallery-grid { grid-template-columns: 1fr; }
+  .ribbon-modal-body { padding: 0.85rem; }
+  .ribbon-card-title { font-size: 24px; }
 }

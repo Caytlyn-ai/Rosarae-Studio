@@ -360,24 +360,29 @@ function getRecommendedWraps(colorName) {
 
 function renderRibbonShop() {
   const grid = document.getElementById('ribbon-shop-grid');
-  const detail = document.getElementById('ribbon-shop-detail');
-  if (!grid || !detail) return;
+  if (!grid) return;
 
   grid.innerHTML = RIBBON_COLORS.map((color, index) => {
     const slug = slugify(color.n);
     const border = (color.h === '#ffffff' || color.h === '#f8f4e8') ? 'border:1px solid #ccc;' : '';
+    const startingPrice = fmt(SHOP_SIZES[0].price);
     return `
-      <article class="ribbon-gallery-card ${index === 0 ? 'active' : ''}" data-ribbon-trigger="${slug}">
+      <article class="ribbon-gallery-card ${index === 0 ? 'active' : ''}" data-ribbon-trigger="${slug}" tabindex="0" role="button" aria-label="Open ${color.n} bouquet details">
         <div class="ribbon-gallery-visual" style="background-color:${color.h};">
-          <div class="ribbon-gallery-bloom" style="background:
-            radial-gradient(circle at 50% 42%, rgba(255,255,255,0.92) 0 10%, rgba(255,255,255,0.22) 11% 30%, transparent 31%),
-            radial-gradient(circle at 28% 34%, rgba(255,255,255,0.24) 0 18%, transparent 19%),
-            radial-gradient(circle at 72% 34%, rgba(255,255,255,0.24) 0 18%, transparent 19%),
-            radial-gradient(circle at 28% 70%, rgba(255,255,255,0.18) 0 17%, transparent 18%),
-            radial-gradient(circle at 72% 70%, rgba(255,255,255,0.18) 0 17%, transparent 18%),
-            linear-gradient(180deg, rgba(255,255,255,0.22), rgba(0,0,0,0.08)),
-            ${color.h};"></div>
-          <div class="ribbon-gallery-stem"></div>
+          <div class="ribbon-gallery-frame">
+            <div class="ribbon-gallery-bloom" style="background:
+              radial-gradient(circle at 50% 42%, rgba(255,255,255,0.92) 0 10%, rgba(255,255,255,0.22) 11% 30%, transparent 31%),
+              radial-gradient(circle at 28% 34%, rgba(255,255,255,0.24) 0 18%, transparent 19%),
+              radial-gradient(circle at 72% 34%, rgba(255,255,255,0.24) 0 18%, transparent 19%),
+              radial-gradient(circle at 28% 70%, rgba(255,255,255,0.18) 0 17%, transparent 18%),
+              radial-gradient(circle at 72% 70%, rgba(255,255,255,0.18) 0 17%, transparent 18%),
+              linear-gradient(180deg, rgba(255,255,255,0.22), rgba(0,0,0,0.08)),
+              ${color.h};"></div>
+            <div class="ribbon-gallery-stem"></div>
+            <div class="ribbon-gallery-overlay">
+              <span class="ribbon-gallery-zoom">Open Details</span>
+            </div>
+          </div>
         </div>
         <div class="ribbon-gallery-content">
           <div class="ribbon-gallery-title-row">
@@ -385,13 +390,12 @@ function renderRibbonShop() {
             <h3 class="ribbon-gallery-title">${color.n}</h3>
           </div>
           <p class="ribbon-gallery-copy">${getRibbonDescription(color.n)}</p>
+          <div class="ribbon-gallery-price">from ${startingPrice}</div>
         </div>
       </article>
     `;
   }).join('');
 
-  detail.innerHTML = '<div class="ribbon-detail-empty">Select a ribbon color to see bouquet sizes, wrap pairings, extras, and delivery options.</div>';
-  renderRibbonDetail(RIBBON_COLORS[0].n);
   attachRibbonShopEvents();
 }
 
@@ -450,10 +454,29 @@ function renderRibbonDetail(colorName) {
   detail.innerHTML = `
     <article class="ribbon-card" data-ribbon-card="${slug}">
       <div class="ribbon-card-header">
-        <span class="ribbon-card-dot" style="background:${color.h};${border}"></span>
-        <div>
+        <div class="ribbon-card-hero" style="background-color:${color.h};">
+          <span class="ribbon-card-image-tag">Future product photo</span>
+          <div class="ribbon-card-bloom" style="background:
+            radial-gradient(circle at 50% 42%, rgba(255,255,255,0.92) 0 10%, rgba(255,255,255,0.22) 11% 30%, transparent 31%),
+            radial-gradient(circle at 28% 34%, rgba(255,255,255,0.24) 0 18%, transparent 19%),
+            radial-gradient(circle at 72% 34%, rgba(255,255,255,0.24) 0 18%, transparent 19%),
+            radial-gradient(circle at 28% 70%, rgba(255,255,255,0.18) 0 17%, transparent 18%),
+            radial-gradient(circle at 72% 70%, rgba(255,255,255,0.18) 0 17%, transparent 18%),
+            linear-gradient(180deg, rgba(255,255,255,0.22), rgba(0,0,0,0.08)),
+            ${color.h};"></div>
+          <div class="ribbon-card-stem"></div>
+        </div>
+        <div class="ribbon-card-summary">
+          <div class="ribbon-card-topline">
+            <span class="ribbon-card-dot" style="background:${color.h};${border}"></span>
+            <span id="ribbon-modal-title">Ribbon Bouquet</span>
+          </div>
           <h3 class="ribbon-card-title">${color.n}</h3>
           <p class="ribbon-card-copy">${getRibbonDescription(color.n)}</p>
+          <div class="ribbon-card-starting">
+            <span class="ribbon-card-starting-label">Starting at</span>
+            <span class="ribbon-card-starting-price">${fmt(SHOP_SIZES[0].price)}</span>
+          </div>
         </div>
       </div>
 
@@ -504,18 +527,55 @@ function calculateRibbonCardTotal(card) {
 }
 
 function attachRibbonShopEvents() {
+  const modal = document.getElementById('ribbon-shop-modal');
+  const detail = document.getElementById('ribbon-shop-detail');
+
   document.querySelectorAll('[data-ribbon-trigger]').forEach((card) => {
     if (card.dataset.bound === 'true') return;
     card.dataset.bound = 'true';
-    card.addEventListener('click', () => {
+    const openCard = () => {
       const slug = card.getAttribute('data-ribbon-trigger');
       const color = RIBBON_COLORS.find((entry) => slugify(entry.n) === slug);
       document.querySelectorAll('[data-ribbon-trigger]').forEach((item) => item.classList.remove('active'));
       card.classList.add('active');
       renderRibbonDetail(color?.n || RIBBON_COLORS[0].n);
+      if (modal) {
+        modal.classList.remove('hidden');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+      }
       attachRibbonShopEvents();
+    };
+
+    card.addEventListener('click', openCard);
+    card.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        openCard();
+      }
     });
   });
+
+  if (modal && modal.dataset.bound !== 'true') {
+    modal.dataset.bound = 'true';
+    modal.querySelectorAll('[data-ribbon-close]').forEach((button) => {
+      button.addEventListener('click', () => {
+        modal.classList.add('hidden');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+        detail.innerHTML = '';
+      });
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !modal.classList.contains('hidden')) {
+        modal.classList.add('hidden');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+        detail.innerHTML = '';
+      }
+    });
+  }
 
   document.querySelectorAll('[data-ribbon-card]').forEach((card) => {
     card.querySelectorAll('input').forEach((input) => {

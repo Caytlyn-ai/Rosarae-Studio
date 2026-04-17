@@ -103,6 +103,14 @@ function getSelectedValues(selector) {
     .map((input) => input.value);
 }
 
+function savePaymentSummary(summary) {
+  try {
+    sessionStorage.setItem('rosarae-payment-summary', JSON.stringify(summary));
+  } catch (error) {
+    // Ignore storage issues and fall back to a plain redirect.
+  }
+}
+
 /* ── MOBILE NAV TOGGLE ── */
 function initNav() {
   const toggle = document.querySelector('.nav-toggle');
@@ -329,7 +337,24 @@ function submitOrderForm(event) {
     body: encode(data),
   })
     .then(() => {
-      showToast('Order request sent! Check Netlify Forms for the submission.');
+      savePaymentSummary({
+        title: 'Custom Order Request',
+        price: document.getElementById('op-total')?.textContent || '$0.00',
+        details: [
+          `Tier: ${currentTier}`,
+          `Rose count: ${data.rose_count}`,
+          `Ribbon colors: ${data.ribbon || 'None selected'}`,
+          `Floral wraps: ${data.wrap || 'None selected'}`,
+          `Mesh wrap: ${data.mesh_wrap || 'Not added'}`,
+          `Bear add-on: ${data.add_bear || 'Not added'}`,
+          `Bear color: ${data.bear_color || 'Not selected'}`,
+          `Diamond push pins: ${data.diamond_push_pins || 'Not added'}`,
+          `Rush order: ${data.rush_order || 'No'}`,
+          `Occasion: ${data.occasion || 'None'}`,
+        ],
+      });
+
+      showToast('Order request sent! Redirecting to payment details...');
       form.reset();
       currentTier = 'small';
       document.querySelectorAll('.tier-tabs .tier-tab').forEach((button, index) => {
@@ -337,6 +362,7 @@ function submitOrderForm(event) {
       });
       syncOrderRangeToTier(currentTier);
       calcOrder();
+      window.location.href = 'payment.html';
     })
     .catch(() => {
       showToast('The order could not send. Please try again.');
@@ -463,7 +489,7 @@ function renderRibbonShop() {
           <div class="single-rose-showcase">
             <div class="single-rose-stem"></div>
             <div class="single-rose-bloom"></div>
-            <div class="single-bear-tag">Keychain Bear</div>
+            <div class="single-bear-charm"></div>
           </div>
           <div class="ribbon-gallery-overlay">
             <span class="ribbon-gallery-zoom">Open Details</span>
@@ -563,6 +589,17 @@ function renderRibbonDetail(colorName) {
     </label>
   `).join('');
 
+  const bearColorOptions = BEAR_COLORS.map((bear, index) => `
+    <label class="ribbon-option">
+      <input type="radio" name="bear-color-${slug}" value="${bear.n}" ${index === 0 ? 'checked' : ''}>
+      <span class="color-dot" style="background:${bear.h};"></span>
+      <span class="ribbon-option-copy">
+        <span class="ribbon-option-title">${bear.n}</span>
+        <span class="ribbon-option-note">Choose a bear color for this bouquet</span>
+      </span>
+    </label>
+  `).join('');
+
   const meshOption = `
     <label class="ribbon-option">
       <input type="checkbox" name="mesh-${slug}" value="mesh" data-price="8">
@@ -628,6 +665,11 @@ function renderRibbonDetail(colorName) {
         <div class="ribbon-option-list">${extrasOptions}</div>
       </fieldset>
 
+      <fieldset class="ribbon-fieldset hidden" data-bear-colors="${slug}">
+        <legend>Choose Bear Color</legend>
+        <div class="ribbon-option-list">${bearColorOptions}</div>
+      </fieldset>
+
       <fieldset class="ribbon-fieldset">
         <legend>Delivery Option</legend>
         <div class="ribbon-option-list">${deliveryOptions}</div>
@@ -691,7 +733,7 @@ function renderSingleRoseDetail() {
           <div class="single-rose-showcase modal-single-rose">
             <div class="single-rose-stem"></div>
             <div class="single-rose-bloom"></div>
-            <div class="single-bear-tag">Keychain Bear</div>
+            <div class="single-bear-charm"></div>
           </div>
         </div>
         <div class="ribbon-card-summary">
@@ -876,6 +918,14 @@ function attachRibbonShopEvents() {
             showToast(`You can choose up to ${limit} floral wraps.`);
           }
         }
+
+        if (input.name.startsWith('extra-') && input.value === 'bear') {
+          const bearFieldset = card.querySelector('[data-bear-colors]');
+          if (bearFieldset) {
+            bearFieldset.classList.toggle('hidden', !input.checked);
+          }
+        }
+
         calculateRibbonCardTotal(card);
       });
     });
@@ -889,19 +939,85 @@ function attachRibbonShopEvents() {
           const bearColor = card.querySelector('input[name="single-bear-color"]:checked')?.value || 'Bear color';
           const wrap = card.querySelector('input[name="single-wrap"]:checked')?.value || 'No floral wrap';
           const delivery = card.querySelector('input[name="single-delivery"]:checked')?.value || 'Pickup';
+          savePaymentSummary({
+            title: 'Single Rose + Keychain Bear',
+            price: card.querySelector('[data-ribbon-total]')?.textContent || '$0.00',
+            details: [
+              `Rose color: ${roseColor}`,
+              `Bear color: ${bearColor}`,
+              `Floral wrap: ${wrap}`,
+              `Delivery: ${delivery}`,
+            ],
+          });
           showToast(`Single Rose + Bear saved: ${roseColor}, ${bearColor}, ${wrap}, ${delivery}.`);
+          window.location.href = 'payment.html';
           return;
         }
         const ribbonName = card.querySelector('.ribbon-card-title')?.textContent || 'bouquet';
         const size = card.querySelector('input[name^="size-"]:checked')?.closest('.ribbon-option')?.querySelector('.ribbon-option-title')?.textContent || 'Custom size';
         const wrap = Array.from(card.querySelectorAll('input[name^="wrap-"]:checked')).map((input) => input.value).join(', ') || 'No floral wrap selected';
         const delivery = card.querySelector('input[name^="delivery-"]:checked')?.closest('.ribbon-option')?.querySelector('.ribbon-option-title')?.textContent || 'Pickup';
-        showToast(`${ribbonName} bouquet saved: ${size}, ${wrap} wrap, ${delivery}.`);
+        const bearChoice = card.querySelector('input[name^="extra-"][value="bear"]')?.checked
+          ? (card.querySelector('input[name^="bear-color-"]:checked')?.value || 'Bear color not chosen')
+          : 'No bear add-on';
+        savePaymentSummary({
+          title: ribbonName,
+          price: card.querySelector('[data-ribbon-total]')?.textContent || '$0.00',
+          details: [
+            `Size: ${size}`,
+            `Wraps: ${wrap}`,
+            `Bear: ${bearChoice}`,
+            `Delivery: ${delivery}`,
+          ],
+        });
+        showToast(`${ribbonName} bouquet saved: ${size}, ${wrap}, ${delivery}.`);
+        window.location.href = 'payment.html';
       });
+    }
+
+    const bearFieldset = card.querySelector('[data-bear-colors]');
+    const bearInput = card.querySelector('input[name^="extra-"][value="bear"]');
+    if (bearFieldset && bearInput) {
+      bearFieldset.classList.toggle('hidden', !bearInput.checked);
     }
 
     calculateRibbonCardTotal(card);
   });
+}
+
+function initPaymentPage() {
+  const summaryRoot = document.getElementById('payment-summary');
+  if (!summaryRoot) return;
+
+  let summary = null;
+  try {
+    summary = JSON.parse(sessionStorage.getItem('rosarae-payment-summary') || 'null');
+  } catch (error) {
+    summary = null;
+  }
+
+  if (!summary) {
+    summaryRoot.innerHTML = '<p class="payment-empty">No recent order summary was found yet. Complete an order request or choose a shop item first.</p>';
+    return;
+  }
+
+  const details = (summary.details || []).map((line) => `<li>${line}</li>`).join('');
+  summaryRoot.innerHTML = `
+    <div class="payment-card">
+      <div class="payment-card-header">
+        <p class="payment-label">Payment Details</p>
+        <h2>${summary.title}</h2>
+        <p class="payment-price">${summary.price}</p>
+      </div>
+      <ul class="payment-list">${details}</ul>
+      <div class="payment-actions">
+        <a class="btn btn-primary" href="https://cash.app/$SissyLuv1" target="_blank" rel="noopener">Pay with Cash App</a>
+        <a class="btn btn-outline" href="mailto:caytlyn09@gmail.com?subject=Rosarae%20Studio%20Order%20Payment">Email Payment Questions</a>
+      </div>
+      <p class="payment-note">Send payment through Cash App and include your name or item in the payment note so it matches your order.</p>
+      <p class="payment-note">Card checkout still needs a secure payment processor, so the live payment flow currently uses Cash App only.</p>
+    </div>
+  `;
 }
 
 /* ── INITIALISE on DOM ready ── */
@@ -920,6 +1036,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Scroll animations
   initScrollAnimations();
+  initPaymentPage();
 
   // CashApp link opens in new tab safely
   document.querySelectorAll('a[href*="cash.app"]').forEach(a => {

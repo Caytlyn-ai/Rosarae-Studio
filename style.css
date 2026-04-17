@@ -356,6 +356,142 @@ h3 { font-size: clamp(18px, 2.5vw, 22px); }
   font-weight: 700;
 }
 
+.ribbon-shop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.25rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.ribbon-card {
+  background: var(--white);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  box-shadow: var(--shadow);
+}
+
+.ribbon-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.ribbon-card-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  flex-shrink: 0;
+  margin-top: 0.25rem;
+}
+
+.ribbon-card-title {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  margin-bottom: 0.15rem;
+}
+
+.ribbon-card-copy {
+  font-size: 13px;
+  color: var(--text-mid);
+  line-height: 1.7;
+}
+
+.ribbon-fieldset {
+  border: 0;
+  margin-bottom: 1rem;
+}
+
+.ribbon-fieldset legend {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--rose);
+  margin-bottom: 0.6rem;
+}
+
+.ribbon-option-list {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.ribbon-option {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 0.85rem;
+  background: var(--white);
+}
+
+.ribbon-option input {
+  accent-color: var(--rose);
+  flex-shrink: 0;
+}
+
+.ribbon-option-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.ribbon-option-title {
+  font-size: 13px;
+  color: var(--text-dark);
+}
+
+.ribbon-option-note {
+  font-size: 11px;
+  color: var(--text-light);
+}
+
+.ribbon-price-line {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--rose);
+  white-space: nowrap;
+}
+
+.ribbon-card-footer {
+  border-top: 0.5px solid var(--border);
+  margin-top: 1rem;
+  padding-top: 1rem;
+}
+
+.ribbon-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.85rem;
+}
+
+.ribbon-total-label {
+  font-size: 13px;
+  color: var(--text-mid);
+}
+
+.ribbon-total-price {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--rose);
+}
+
+.ribbon-meta {
+  font-size: 12px;
+  color: var(--text-mid);
+  line-height: 1.7;
+  margin-top: 0.85rem;
+}
+
+.ribbon-order-btn {
+  width: 100%;
+}
+
 /* ── ABOUT SECTION ── */
 .about-split {
   display: grid;
@@ -807,6 +943,10 @@ footer a { color: var(--rose); }
 
   .product-grid {
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  }
+
+  .ribbon-shop-grid {
+    grid-template-columns: 1fr;
   }
 
   .photo-grid {

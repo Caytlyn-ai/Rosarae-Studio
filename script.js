@@ -50,6 +50,22 @@ const TIER_RATES = { small: 2.50, medium: 2.75, large: 3.00 };
 
 let currentTier = 'small';
 
+const SHOP_SIZES = [
+  { id: 'small', label: 'Small (5 roses)', roses: 5, price: 18 },
+  { id: 'medium', label: 'Medium (10 roses)', roses: 10, price: 32 },
+  { id: 'large', label: 'Large (20 roses)', roses: 20, price: 58 },
+];
+
+const SHOP_EXTRAS = [
+  { id: 'bear', label: 'Plush Keychain Bear', price: 10 },
+  { id: 'diamonds', label: 'Diamond push pins', price: 4 },
+];
+
+const DELIVERY_OPTIONS = [
+  { id: 'pickup', label: 'Pickup', price: 0 },
+  { id: 'delivery', label: 'Local Delivery', price: 15 },
+];
+
 /* ── HELPERS ── */
 function fmt(n) {
   return '$' + n.toFixed(2);
@@ -270,6 +286,210 @@ function ribbonChk() {
   calcOrder();
 }
 
+function slugify(value) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+function getRibbonDescription(colorName) {
+  const descriptions = {
+    'White': 'Clean and timeless for weddings, memorial gifts, and classic keepsake bouquets.',
+    'Light Pink': 'Soft and sweet with a gentle romantic feel for birthdays and baby showers.',
+    'Hot Pink': 'Bright and playful for bold celebrations that need a cheerful pop of color.',
+    'Peach Pink': 'Warm and delicate with a blush-toned glow that feels tender and elegant.',
+    'Rose Red': 'Rich and romantic for anniversaries, Valentine gifts, and statement bouquets.',
+    'Rose Pink': 'A graceful pink with a polished, feminine look for heartfelt gifting.',
+    'Light Blue': 'Fresh and airy with a calming finish that feels clean and celebratory.',
+    'Dusty Blue': 'Muted and elegant, perfect for modern bouquets with a soft refined palette.',
+    'Pale Blue': 'A delicate pastel blue that feels serene, gentle, and beautifully classic.',
+    'Smoky Blue': 'Sophisticated and moody with a smooth satin finish that photographs beautifully.',
+    'Dark Blue': 'Deep and dramatic for a bouquet that feels rich, formal, and confident.',
+    'Navy Blue': 'Classic and polished with a luxe feel for bold yet timeless arrangements.',
+    'Black': 'Striking and modern for dramatic bouquets with a fashion-forward edge.',
+    'Pink': 'Pretty and cheerful for everyday gifting, birthdays, and sweet thank-you bouquets.',
+    'Red': 'A vibrant red bouquet that feels full of love, passion, and celebration.',
+    'Green': 'Fresh and lively with a playful botanical feel that stands out beautifully.',
+    'Light Purple': 'Dreamy and whimsical with a soft lavender tone for delicate occasions.',
+    'Yellow': 'Sunny and uplifting for joyful gifts that instantly brighten the room.',
+    'Royal Blue': 'Bold and vibrant for standout bouquets with a jewel-toned finish.',
+    'Ivory': 'Warm and graceful with a creamy softness that pairs beautifully with satin wraps.',
+    'Purple': 'Rich and expressive with a regal feel for standout keepsake bouquets.',
+    'Dark Green': 'Earthy and luxurious for deep-toned bouquets with a dramatic natural mood.',
+    'Sky Blue': 'Bright, fresh, and happy with a breezy softness that feels effortless.',
+    'Gold': 'Shimmering and celebratory for bouquets that feel glamorous and gift-ready.',
+    'Champagne Gold': 'Softly luxe with an elevated neutral glow perfect for elegant events.',
+    'Wine Red': 'Deep and romantic with a velvety richness made for meaningful moments.',
+  };
+
+  return descriptions[colorName] || 'A handmade satin bouquet color designed to feel personal, polished, and gift-ready.';
+}
+
+function getRecommendedWraps(colorName) {
+  const suggestions = {
+    'White': ['Dusty Pink', 'Light Pink', 'Beige'],
+    'Light Pink': ['Light Pink', 'Dusty Pink', 'Beige'],
+    'Hot Pink': ['Black', 'Light Grey', 'Light Pink'],
+    'Peach Pink': ['Beige', 'Light Pink', 'Dusty Pink'],
+    'Rose Red': ['Black', 'Light Grey', 'Beige'],
+    'Rose Pink': ['Dusty Pink', 'Light Pink', 'Beige'],
+    'Light Blue': ['Light Grey', 'Cyan', 'Beige'],
+    'Dusty Blue': ['Dark Grey', 'Light Grey', 'Beige'],
+    'Pale Blue': ['Light Grey', 'Cyan', 'Beige'],
+    'Smoky Blue': ['Dark Grey', 'Light Grey', 'Black'],
+    'Dark Blue': ['Black', 'Light Grey', 'Beige'],
+    'Navy Blue': ['Black', 'Light Grey', 'Beige'],
+    'Black': ['Black', 'Light Grey', 'Dusty Pink'],
+    'Pink': ['Light Pink', 'Dusty Pink', 'Beige'],
+    'Red': ['Black', 'Light Grey', 'Beige'],
+    'Green': ['Beige', 'Black', 'Light Grey'],
+    'Light Purple': ['Lavender', 'Light Pink', 'Light Grey'],
+    'Yellow': ['Beige', 'Light Grey', 'Dusty Pink'],
+    'Royal Blue': ['Black', 'Light Grey', 'Cyan'],
+    'Ivory': ['Beige', 'Light Pink', 'Dusty Pink'],
+    'Purple': ['Lavender', 'Black', 'Light Grey'],
+    'Dark Green': ['Black', 'Beige', 'Light Grey'],
+    'Sky Blue': ['Cyan', 'Light Grey', 'Beige'],
+    'Gold': ['Black', 'Beige', 'Light Grey'],
+    'Champagne Gold': ['Beige', 'Dusty Pink', 'Light Grey'],
+    'Wine Red': ['Black', 'Beige', 'Light Grey'],
+  };
+
+  return (suggestions[colorName] || ['Beige', 'Light Grey', 'Black'])
+    .map((wrapName) => WRAP_COLORS.find((wrap) => wrap.n === wrapName))
+    .filter(Boolean);
+}
+
+function renderRibbonShop() {
+  const grid = document.getElementById('ribbon-shop-grid');
+  if (!grid) return;
+
+  grid.innerHTML = RIBBON_COLORS.map((color) => {
+    const slug = slugify(color.n);
+    const border = (color.h === '#ffffff' || color.h === '#f8f4e8') ? 'border:1px solid #ccc;' : '';
+    const wraps = getRecommendedWraps(color.n);
+
+    const sizeOptions = SHOP_SIZES.map((size, index) => `
+      <label class="ribbon-option">
+        <input type="radio" name="size-${slug}" value="${size.id}" data-price="${size.price}" ${index === 0 ? 'checked' : ''}>
+        <span class="ribbon-option-copy">
+          <span class="ribbon-option-title">${size.label}</span>
+          <span class="ribbon-option-note">${size.roses} hand-folded roses</span>
+        </span>
+        <span class="ribbon-price-line">${fmt(size.price)}</span>
+      </label>
+    `).join('');
+
+    const wrapOptions = wraps.map((wrap, index) => `
+      <label class="ribbon-option">
+        <input type="radio" name="wrap-${slug}" value="${wrap.n}" ${index === 0 ? 'checked' : ''}>
+        <span class="color-dot" style="background:${wrap.h};${wrap.h === '#ffffff' || wrap.h === '#f8f4e8' ? 'border:1px solid #ccc;' : ''}"></span>
+        <span class="ribbon-option-copy">
+          <span class="ribbon-option-title">${wrap.n}</span>
+          <span class="ribbon-option-note">Best paired with ${color.n.toLowerCase()} satin ribbon</span>
+        </span>
+      </label>
+    `).join('');
+
+    const extrasOptions = SHOP_EXTRAS.map((extra) => `
+      <label class="ribbon-option">
+        <input type="checkbox" name="extra-${slug}" value="${extra.id}" data-price="${extra.price}">
+        <span class="ribbon-option-copy">
+          <span class="ribbon-option-title">${extra.label}</span>
+          <span class="ribbon-option-note">Adds a special finishing detail</span>
+        </span>
+        <span class="ribbon-price-line">+${fmt(extra.price)}</span>
+      </label>
+    `).join('');
+
+    const deliveryOptions = DELIVERY_OPTIONS.map((option, index) => `
+      <label class="ribbon-option">
+        <input type="radio" name="delivery-${slug}" value="${option.id}" data-price="${option.price}" ${index === 0 ? 'checked' : ''}>
+        <span class="ribbon-option-copy">
+          <span class="ribbon-option-title">${option.label}${option.price ? ` (+$${option.price})` : ''}</span>
+          <span class="ribbon-option-note">${option.id === 'pickup' ? 'Arrange a pickup time after ordering' : 'Available for nearby local delivery'}</span>
+        </span>
+      </label>
+    `).join('');
+
+    return `
+      <article class="ribbon-card" data-ribbon-card="${slug}">
+        <div class="ribbon-card-header">
+          <span class="ribbon-card-dot" style="background:${color.h};${border}"></span>
+          <div>
+            <h3 class="ribbon-card-title">${color.n}</h3>
+            <p class="ribbon-card-copy">${getRibbonDescription(color.n)}</p>
+          </div>
+        </div>
+
+        <fieldset class="ribbon-fieldset">
+          <legend>Select Size</legend>
+          <div class="ribbon-option-list">${sizeOptions}</div>
+        </fieldset>
+
+        <fieldset class="ribbon-fieldset">
+          <legend>Choose Wrap Style</legend>
+          <div class="ribbon-option-list">${wrapOptions}</div>
+        </fieldset>
+
+        <fieldset class="ribbon-fieldset">
+          <legend>Add Extras</legend>
+          <div class="ribbon-option-list">${extrasOptions}</div>
+        </fieldset>
+
+        <fieldset class="ribbon-fieldset">
+          <legend>Delivery Option</legend>
+          <div class="ribbon-option-list">${deliveryOptions}</div>
+        </fieldset>
+
+        <div class="ribbon-card-footer">
+          <div class="ribbon-total">
+            <span class="ribbon-total-label">Estimated total</span>
+            <span class="ribbon-total-price" data-ribbon-total="${slug}">${fmt(SHOP_SIZES[0].price)}</span>
+          </div>
+          <button class="btn btn-primary ribbon-order-btn" type="button" data-ribbon-order="${slug}">Order Now</button>
+          <p class="ribbon-meta">Each bouquet is handmade. Slight variations may occur.<br>Ready in up to 5 days.</p>
+        </div>
+      </article>
+    `;
+  }).join('');
+
+  attachRibbonShopEvents();
+}
+
+function calculateRibbonCardTotal(card) {
+  const selectedSize = card.querySelector('input[name^="size-"]:checked');
+  const selectedDelivery = card.querySelector('input[name^="delivery-"]:checked');
+  const extraInputs = card.querySelectorAll('input[name^="extra-"]:checked');
+
+  let total = Number(selectedSize?.dataset.price || 0) + Number(selectedDelivery?.dataset.price || 0);
+  extraInputs.forEach((input) => {
+    total += Number(input.dataset.price || 0);
+  });
+
+  const totalNode = card.querySelector('[data-ribbon-total]');
+  if (totalNode) totalNode.textContent = fmt(total);
+}
+
+function attachRibbonShopEvents() {
+  document.querySelectorAll('[data-ribbon-card]').forEach((card) => {
+    card.querySelectorAll('input').forEach((input) => {
+      input.addEventListener('change', () => calculateRibbonCardTotal(card));
+    });
+
+    const orderButton = card.querySelector('[data-ribbon-order]');
+    if (orderButton) {
+      orderButton.addEventListener('click', () => {
+        const ribbonName = card.querySelector('.ribbon-card-title')?.textContent || 'bouquet';
+        const size = card.querySelector('input[name^="size-"]:checked')?.closest('.ribbon-option')?.querySelector('.ribbon-option-title')?.textContent || 'Custom size';
+        const wrap = card.querySelector('input[name^="wrap-"]:checked')?.value || 'recommended wrap';
+        const delivery = card.querySelector('input[name^="delivery-"]:checked')?.closest('.ribbon-option')?.querySelector('.ribbon-option-title')?.textContent || 'Pickup';
+        showToast(`${ribbonName} bouquet saved: ${size}, ${wrap} wrap, ${delivery}.`);
+      });
+    }
+
+    calculateRibbonCardTotal(card);
+  });
+}
+
 /* ── INITIALISE on DOM ready ── */
 document.addEventListener('DOMContentLoaded', () => {
   // Nav
@@ -278,6 +498,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Build color grids if on order page
   buildColorGrid('ribbon-grid', RIBBON_COLORS, 'ribbon');
   buildColorGrid('wrap-grid',   WRAP_COLORS,   'wrap');
+  renderRibbonShop();
 
   // Initial calc
   calcOrder();

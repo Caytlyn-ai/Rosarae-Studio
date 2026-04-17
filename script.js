@@ -47,6 +47,11 @@ const WRAP_COLORS = [
 ];
 
 const TIER_RATES = { small: 2.50, medium: 2.75, large: 3.00 };
+const TIER_CONFIG = {
+  small: { min: 1, max: 9, value: 5, note: 'Small bouquets range from 1 to 9 roses.' },
+  medium: { min: 10, max: 40, value: 20, note: 'Medium bouquets range from 10 to 40 roses.' },
+  large: { min: 50, max: 100, value: 75, note: 'Large bouquets range from 50 to 100 roses.' },
+};
 
 let currentTier = 'small';
 
@@ -127,22 +132,33 @@ function setTier(t, el) {
 
   document.querySelectorAll('.tier-tabs .tier-tab').forEach(b => b.classList.remove('active'));
   if (el) el.classList.add('active');
-
-  ['small', 'medium', 'large'].forEach(s => {
-    const sec = document.getElementById('oc-' + s);
-    if (sec) sec.classList.toggle('active', s === t);
-  });
+  syncOrderRangeToTier(t);
 
   calcOrder();
 }
 
 /* ── SLIDER UPDATES ── */
-function updR(pfx) {
-  const el = document.getElementById(pfx + '-r');
+function updR() {
+  const el = document.getElementById('order-rose-range');
   if (!el) return;
-  const rv = document.getElementById(pfx + '-rv');
+  const rv = document.getElementById('order-rose-value');
   if (rv) rv.textContent = el.value;
   calcOrder();
+}
+
+function syncOrderRangeToTier(tier) {
+  const el = document.getElementById('order-rose-range');
+  const rv = document.getElementById('order-rose-value');
+  const note = document.getElementById('order-rose-note');
+  if (!el) return;
+
+  const cfg = TIER_CONFIG[tier] || TIER_CONFIG.small;
+  el.min = cfg.min;
+  el.max = cfg.max;
+  el.value = cfg.value;
+
+  if (rv) rv.textContent = cfg.value;
+  if (note) note.textContent = cfg.note;
 }
 
 /* ── PRICE CALCULATOR (order page) ── */
@@ -158,14 +174,7 @@ function calcOrder() {
 
   let roses = 5;
   const rate = TIER_RATES[currentTier] || 2.50;
-
-  if (currentTier === 'small') {
-    roses = parseInt(document.getElementById('sm-r')?.value || 5);
-  } else if (currentTier === 'medium') {
-    roses = parseInt(document.getElementById('md-r')?.value || 20);
-  } else if (currentTier === 'large') {
-    roses = parseInt(document.getElementById('lg-r')?.value || 75);
-  }
+  roses = parseInt(document.getElementById('order-rose-range')?.value || TIER_CONFIG[currentTier]?.value || 5);
 
   let base = roses * rate;
   roseRow.innerHTML = `<span>${roses} roses × ${fmt(rate)}</span><span>${fmt(base)}</span>`;
@@ -441,6 +450,17 @@ function renderRibbonDetail(colorName) {
     </label>
   `).join('');
 
+  const meshOption = `
+    <label class="ribbon-option">
+      <input type="checkbox" name="mesh-${slug}" value="mesh" data-price="8">
+      <span class="ribbon-option-copy">
+        <span class="ribbon-option-title">Black mesh pearl wrap</span>
+        <span class="ribbon-option-note">Add over the floral wrap for a fuller finished bouquet</span>
+      </span>
+      <span class="ribbon-price-line">+${fmt(8)}</span>
+    </label>
+  `;
+
   const deliveryOptions = DELIVERY_OPTIONS.map((option, index) => `
     <label class="ribbon-option">
       <input type="radio" name="delivery-${slug}" value="${option.id}" data-price="${option.price}" ${index === 0 ? 'checked' : ''}>
@@ -487,7 +507,7 @@ function renderRibbonDetail(colorName) {
 
       <fieldset class="ribbon-fieldset">
         <legend>Choose Wrap Style</legend>
-        <div class="ribbon-option-list">${wrapOptions}</div>
+        <div class="ribbon-option-list">${wrapOptions}${meshOption}</div>
       </fieldset>
 
       <fieldset class="ribbon-fieldset">
@@ -516,11 +536,13 @@ function calculateRibbonCardTotal(card) {
   const selectedSize = card.querySelector('input[name^="size-"]:checked');
   const selectedDelivery = card.querySelector('input[name^="delivery-"]:checked');
   const extraInputs = card.querySelectorAll('input[name^="extra-"]:checked');
+  const meshInput = card.querySelector('input[name^="mesh-"]:checked');
 
   let total = Number(selectedSize?.dataset.price || 0) + Number(selectedDelivery?.dataset.price || 0);
   extraInputs.forEach((input) => {
     total += Number(input.dataset.price || 0);
   });
+  total += Number(meshInput?.dataset.price || 0);
 
   const totalNode = card.querySelector('[data-ribbon-total]');
   if (totalNode) totalNode.textContent = fmt(total);
@@ -608,6 +630,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Build color grids if on order page
   buildColorGrid('ribbon-grid', RIBBON_COLORS, 'ribbon');
   buildColorGrid('wrap-grid',   WRAP_COLORS,   'wrap');
+  syncOrderRangeToTier(currentTier);
   renderRibbonShop();
 
   // Initial calc

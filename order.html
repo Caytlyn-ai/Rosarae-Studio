@@ -14,13 +14,12 @@
       <span></span><span></span><span></span>
     </button>
     <ul class="nav-links">
-      <li><a href="index.html#gallery">Gallery</a></li>
+      <li><a href="gallery.html">Gallery</a></li>
       <li><a href="shop.html">Shop</a></li>
       <li><a href="about.html">About</a></li>
       <li><a href="contact.html">Contact</a></li>
       <li><a href="order.html">Custom Order</a></li>
     </ul>
-    <a href="order.html" class="btn btn-primary" style="font-size:13px;padding:8px 18px;">Order Now</a>
   </nav>
 
   <section class="section">
@@ -49,14 +48,16 @@
         <button class="tier-tab" onclick="setTier('large', this)">Large &nbsp;&middot;&nbsp; 50-100 roses &nbsp;&middot;&nbsp; $3.00/rose</button>
       </div>
 
-      <div id="oc-small" style="margin-bottom:1rem;display:block;">
-        <div class="field"><label>Number of roses</label><div class="rose-count-row"><input type="range" min="1" max="9" value="5" step="1" id="sm-r" oninput="updR('sm')" /><span class="rose-val" id="sm-rv">5</span><span style="font-size:13px;color:#9e9b96;">roses</span></div></div>
-      </div>
-      <div id="oc-medium" style="display:none;margin-bottom:1rem;">
-        <div class="field"><label>Number of roses</label><div class="rose-count-row"><input type="range" min="10" max="40" value="20" step="1" id="md-r" oninput="updR('md')" /><span class="rose-val" id="md-rv">20</span><span style="font-size:13px;color:#9e9b96;">roses</span></div></div>
-      </div>
-      <div id="oc-large" style="display:none;margin-bottom:1rem;">
-        <div class="field"><label>Number of roses</label><div class="rose-count-row"><input type="range" min="50" max="100" value="75" step="1" id="lg-r" oninput="updR('lg')" /><span class="rose-val" id="lg-rv">75</span><span style="font-size:13px;color:#9e9b96;">roses</span></div></div>
+      <div id="order-slider-panel" style="margin-bottom:1rem;">
+        <div class="field">
+          <label for="order-rose-range">Number of roses</label>
+          <div class="rose-count-row">
+            <input type="range" min="1" max="9" value="5" step="1" id="order-rose-range" oninput="updR()" />
+            <span class="rose-val" id="order-rose-value">5</span>
+            <span style="font-size:13px;color:#9e9b96;">roses</span>
+          </div>
+          <div class="rose-range-note" id="order-rose-note">Small bouquets range from 1 to 9 roses.</div>
+        </div>
       </div>
 
       <div class="section-label">Satin ribbon colors</div>

@@ -151,6 +151,26 @@ function resetCustomOrderForm(form) {
   calcOrder();
 }
 
+function parseMoneyString(value) {
+  return Number(String(value || '0').replace(/[^0-9.]/g, '')) || 0;
+}
+
+function setStripeSubmittedSession(sessionId) {
+  try {
+    sessionStorage.setItem('rosarae-stripe-submitted-session', sessionId || '');
+  } catch (error) {
+    // Ignore storage issues.
+  }
+}
+
+function getStripeSubmittedSession() {
+  try {
+    return sessionStorage.getItem('rosarae-stripe-submitted-session') || '';
+  } catch (error) {
+    return '';
+  }
+}
+
 /* ── MOBILE NAV TOGGLE ── */
 function initNav() {
   const toggle = document.querySelector('.nav-toggle');
@@ -1054,7 +1074,9 @@ function initPaymentPage() {
 
   const summary = getStoredJson('rosarae-payment-summary');
   const pendingOrder = getStoredJson('rosarae-pending-order');
-  const cashAppOpened = sessionStorage.getItem('rosarae-cashapp-opened') === 'true';
+  const urlParams = new URLSearchParams(window.location.search);
+  const checkoutStatus = urlParams.get('checkout');
+  const sessionId = urlParams.get('session_id');
 
   if (!summary) {
     summaryRoot.innerHTML = '<p class="payment-empty">No recent order summary was found yet. Complete an order request or choose a shop item first.</p>';
@@ -1063,6 +1085,10 @@ function initPaymentPage() {
   }
 
   const details = (summary.details || []).map((line) => `<li>${line}</li>`).join('');
+  const statusMessage = checkoutStatus === 'cancel'
+    ? '<p class="payment-note payment-note-strong">Your Stripe checkout was canceled. Your order details are still saved below, so you can try payment again.</p>'
+    : '';
+
   summaryRoot.innerHTML = `
     <div class="payment-card">
       <div class="payment-card-header">
@@ -1072,21 +1098,127 @@ function initPaymentPage() {
       </div>
       <ul class="payment-list">${details}</ul>
       <div class="payment-actions">
-        <a class="btn btn-primary" href="https://cash.app/$SissyLuv1" target="_blank" rel="noopener" id="cashapp-pay-link">Pay with Cash App</a>
         <a class="btn btn-outline" href="mailto:caytlyn09@gmail.com?subject=Rosarae%20Studio%20Order%20Payment">Email Payment Questions</a>
       </div>
-      <p class="payment-note">Send payment through Cash App and include your name or item in the payment note so it matches your order.</p>
-      <p class="payment-note">Payment is required before the order request can be submitted.</p>
+      <p class="payment-note">Orders are paid securely through Stripe Checkout before the final paid order request is sent to Rosarae Studio.</p>
+      ${statusMessage}
     </div>
   `;
+
+  const buildOrderPayload = (customer, stripeDetails) => ({
+    'form-name': pendingOrder?.formName || 'order-payment',
+    subject: 'New Rosarae Studio paid order',
+    order_type: pendingOrder?.orderType || 'shop',
+    order_title: summary.title,
+    order_total: summary.price,
+    order_details: (summary.details || []).join(' | '),
+    payment_method: 'Stripe',
+    payment_link: stripeDetails?.sessionId ? `Stripe Checkout Session ${stripeDetails.sessionId}` : 'Stripe Checkout',
+    payment_note: 'Paid with Stripe Checkout',
+    payment_confirmed: 'Yes',
+    cashapp_sender: '',
+    payment_amount: stripeDetails?.amount || summary.price,
+    stripe_session_id: stripeDetails?.sessionId || '',
+    stripe_payment_status: stripeDetails?.status || '',
+    source_page: pendingOrder?.sourcePage || 'shop',
+    name: customer.name,
+    email: customer.email,
+    phone: customer.phone,
+    delivery_address: customer.delivery_address,
+    notes: customer.notes,
+  });
+
+  const renderPaidSuccess = () => {
+    summaryRoot.innerHTML = `
+      <div class="payment-card">
+        <div class="payment-card-header">
+          <p class="payment-label">Order Paid</p>
+          <h2>Thank you for your order</h2>
+          <p class="payment-subcopy">Your Stripe payment was confirmed and your paid order request was sent to Rosarae Studio.</p>
+        </div>
+        <div class="payment-actions">
+          <a class="btn btn-primary" href="shop.html">Back to Shop</a>
+          <a class="btn btn-outline" href="contact.html">Contact Rosarae Studio</a>
+        </div>
+      </div>
+    `;
+    checkoutRoot.innerHTML = '';
+  };
+
+  if (checkoutStatus === 'success' && sessionId) {
+    checkoutRoot.innerHTML = `
+      <div class="payment-card payment-card-secondary">
+        <div class="payment-card-header">
+          <p class="payment-label">Verifying Payment</p>
+          <h2>Checking your Stripe payment</h2>
+          <p class="payment-subcopy">Please wait while we confirm your payment and send your paid order request.</p>
+        </div>
+      </div>
+    `;
+
+    const submittedSession = getStripeSubmittedSession();
+    if (submittedSession === sessionId) {
+      clearPendingOrder();
+      renderPaidSuccess();
+      return;
+    }
+
+    fetch(`/.netlify/functions/verify-checkout-session?session_id=${encodeURIComponent(sessionId)}`)
+      .then((response) => response.json().then((data) => ({ ok: response.ok, data })))
+      .then(({ ok, data }) => {
+        if (!ok || data.payment_status !== 'paid' || data.status !== 'complete') {
+          throw new Error(data.error || 'Stripe payment has not been confirmed yet.');
+        }
+
+        const customer = {
+          name: pendingOrder?.customer?.name || '',
+          email: pendingOrder?.customer?.email || data.customer_email || '',
+          phone: pendingOrder?.customer?.phone || '',
+          delivery_address: pendingOrder?.customer?.delivery_address || '',
+          notes: pendingOrder?.notes || '',
+        };
+
+        return fetch('/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: encode(buildOrderPayload(customer, {
+            sessionId: data.id,
+            status: data.payment_status,
+            amount: fmt((data.amount_total || 0) / 100),
+          })),
+        });
+      })
+      .then((response) => {
+        if (!response.ok) throw new Error('Unable to send the paid order request.');
+        setStripeSubmittedSession(sessionId);
+        clearPendingOrder();
+        renderPaidSuccess();
+      })
+      .catch((error) => {
+        checkoutRoot.innerHTML = `
+          <div class="payment-card payment-card-secondary">
+            <div class="payment-card-header">
+              <p class="payment-label">Payment Check Needed</p>
+              <h2>We could not finish the order automatically</h2>
+              <p class="payment-subcopy">${error.message || 'Please contact Rosarae Studio so the payment can be confirmed.'}</p>
+            </div>
+            <div class="payment-actions">
+              <a class="btn btn-outline" href="mailto:caytlyn09@gmail.com?subject=Rosarae%20Studio%20Stripe%20Payment%20Help">Email for Payment Help</a>
+              <a class="btn btn-primary" href="payment.html">Reload Payment Page</a>
+            </div>
+          </div>
+        `;
+      });
+    return;
+  }
 
   const customer = pendingOrder?.customer || {};
   checkoutRoot.innerHTML = `
     <div class="payment-card payment-card-secondary">
       <div class="payment-card-header">
         <p class="payment-label">Final Step</p>
-        <h2>Send Your Order Request</h2>
-        <p class="payment-subcopy">Add your delivery details, send payment in Cash App, then submit your order so it reaches Rosarae Studio.</p>
+        <h2>Pay with Stripe</h2>
+        <p class="payment-subcopy">Add your customer and delivery details, then continue to Stripe Checkout. Your order request will only be sent after Stripe confirms payment.</p>
       </div>
       <form id="payment-order-form" class="payment-order-form">
         <div class="form-grid-2">
@@ -1105,18 +1237,8 @@ function initPaymentPage() {
             <input id="pay-phone" name="phone" type="tel" value="${customer.phone || ''}" />
           </div>
           <div class="field">
-            <label for="pay-cash-note">Cash App payment note</label>
-            <input id="pay-cash-note" name="cashapp_note" type="text" value="${summary.title}" />
-          </div>
-        </div>
-        <div class="form-grid-2">
-          <div class="field">
-            <label for="pay-cashapp-name">Cash App sender name or $cashtag</label>
-            <input id="pay-cashapp-name" name="cashapp_sender" type="text" placeholder="Example: $YourCashTag" required />
-          </div>
-          <div class="field">
-            <label for="pay-payment-total">Amount sent in Cash App</label>
-            <input id="pay-payment-total" name="payment_amount" type="text" value="${summary.price}" required />
+            <label for="pay-total">Order total</label>
+            <input id="pay-total" name="order_total" type="text" value="${summary.price}" readonly />
           </div>
         </div>
         <div class="field">
@@ -1127,32 +1249,17 @@ function initPaymentPage() {
           <label for="pay-order-notes">Anything else we should know?</label>
           <textarea id="pay-order-notes" name="notes" placeholder="Gift note, delivery timing, or order details">${pendingOrder?.notes || ''}</textarea>
         </div>
-        <label class="payment-check">
-          <input id="pay-confirm" type="checkbox" required />
-          <span>I have already sent this payment through Cash App and understand the order request should not be submitted until payment is complete.</span>
-        </label>
         <div class="payment-submit-row">
-          <button class="btn btn-primary" type="submit" id="payment-submit-button" ${cashAppOpened ? '' : 'disabled'}>Send Paid Order Request</button>
-          <a class="btn btn-outline" href="https://cash.app/$SissyLuv1" target="_blank" rel="noopener" id="cashapp-confirm-link">Open Cash App</a>
+          <button class="btn btn-primary" type="submit" id="payment-submit-button">Pay with Stripe</button>
+          <a class="btn btn-outline" href="mailto:caytlyn09@gmail.com?subject=Rosarae%20Studio%20Order%20Payment">Email Payment Questions</a>
         </div>
-        <p class="payment-note payment-note-strong">You must open Cash App and complete payment before this button becomes available.</p>
+        <p class="payment-note payment-note-strong">Your order request will only go through after Stripe confirms card payment.</p>
       </form>
     </div>
   `;
 
   const paymentForm = document.getElementById('payment-order-form');
   if (!paymentForm) return;
-  const cashAppPayLink = document.getElementById('cashapp-pay-link');
-  const cashAppConfirmLink = document.getElementById('cashapp-confirm-link');
-  const submitButton = document.getElementById('payment-submit-button');
-
-  function unlockPaidSubmit() {
-    setCashAppOpened(true);
-    if (submitButton) submitButton.disabled = false;
-  }
-
-  if (cashAppPayLink) cashAppPayLink.addEventListener('click', unlockPaidSubmit);
-  if (cashAppConfirmLink) cashAppConfirmLink.addEventListener('click', unlockPaidSubmit);
 
   paymentForm.addEventListener('submit', (event) => {
     event.preventDefault();
@@ -1162,69 +1269,58 @@ function initPaymentPage() {
     const phone = document.getElementById('pay-phone')?.value.trim();
     const deliveryAddress = document.getElementById('pay-address')?.value.trim();
     const notes = document.getElementById('pay-order-notes')?.value.trim();
-    const cashappNote = document.getElementById('pay-cash-note')?.value.trim();
-    const cashappSender = document.getElementById('pay-cashapp-name')?.value.trim();
-    const paymentAmount = document.getElementById('pay-payment-total')?.value.trim();
-    const paymentConfirmed = document.getElementById('pay-confirm')?.checked;
-    const paymentOpened = sessionStorage.getItem('rosarae-cashapp-opened') === 'true';
 
-    if (!name || !email || !deliveryAddress || !cashappSender || !paymentAmount) {
-      showToast('Please complete all required customer and payment fields.');
+    if (!name || !email || !deliveryAddress) {
+      showToast('Please fill in your name, email, and delivery address.');
       return;
     }
 
-    if (!paymentOpened || !paymentConfirmed) {
-      showToast('Cash App payment must be completed before you can send the order request.');
-      return;
-    }
-
-    const payload = {
-      'form-name': pendingOrder?.formName || 'order-payment',
-      subject: 'New Rosarae Studio order',
-      order_type: pendingOrder?.orderType || 'shop',
-      order_title: summary.title,
-      order_total: summary.price,
-      order_details: (summary.details || []).join(' | '),
-      payment_method: 'Cash App',
-      payment_link: 'https://cash.app/$SissyLuv1',
-      payment_note: cashappNote || summary.title,
-      payment_confirmed: 'Yes',
-      cashapp_sender: cashappSender,
-      payment_amount: paymentAmount,
-      source_page: pendingOrder?.sourcePage || 'shop',
-      name,
-      email,
-      phone,
-      delivery_address: deliveryAddress,
+    const updatedPendingOrder = {
+      ...(pendingOrder || {}),
+      formName: pendingOrder?.formName || 'order-payment',
+      orderType: pendingOrder?.orderType || 'shop',
+      orderTitle: summary.title,
+      orderTotal: summary.price,
+      orderDetails: summary.details || [],
+      customer: {
+        name,
+        email,
+        phone,
+        delivery_address: deliveryAddress,
+      },
       notes,
+      sourcePage: pendingOrder?.sourcePage || 'shop',
     };
 
-    fetch('/', {
+    savePendingOrder(updatedPendingOrder);
+    setStripeSubmittedSession('');
+
+    const button = document.getElementById('payment-submit-button');
+    if (button) button.disabled = true;
+
+    fetch('/.netlify/functions/create-checkout-session', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: encode(payload),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        orderTitle: summary.title,
+        orderTotal: parseMoneyString(summary.price),
+        orderDetails: summary.details || [],
+        customer: updatedPendingOrder.customer,
+        notes,
+        sourcePage: updatedPendingOrder.sourcePage,
+        siteUrl: window.location.origin,
+      }),
     })
-      .then(() => {
-        clearPendingOrder();
-        setCashAppOpened(false);
-        showToast('Order request sent successfully.');
-        summaryRoot.innerHTML = `
-          <div class="payment-card">
-            <div class="payment-card-header">
-              <p class="payment-label">Order Sent</p>
-              <h2>Thank you for your order</h2>
-              <p class="payment-subcopy">Your paid order request was sent to Rosarae Studio.</p>
-            </div>
-            <div class="payment-actions">
-              <a class="btn btn-primary" href="https://cash.app/$SissyLuv1" target="_blank" rel="noopener">Pay with Cash App</a>
-              <a class="btn btn-outline" href="shop.html">Back to Shop</a>
-            </div>
-          </div>
-        `;
-        checkoutRoot.innerHTML = '';
+      .then((response) => response.json().then((data) => ({ ok: response.ok, data })))
+      .then(({ ok, data }) => {
+        if (!ok || !data.url) {
+          throw new Error(data.error || 'Unable to start Stripe Checkout.');
+        }
+        window.location.href = data.url;
       })
-      .catch(() => {
-        showToast('The order could not send. Please try again.');
+      .catch((error) => {
+        if (button) button.disabled = false;
+        showToast(error.message || 'Stripe Checkout could not start. Please try again.');
       });
   });
 }

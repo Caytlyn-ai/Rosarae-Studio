@@ -124,6 +124,14 @@ function clearPendingOrder() {
   }
 }
 
+function setCashAppOpened(opened) {
+  try {
+    sessionStorage.setItem('rosarae-cashapp-opened', opened ? 'true' : 'false');
+  } catch (error) {
+    // Ignore storage issues.
+  }
+}
+
 function getStoredJson(key) {
   try {
     return JSON.parse(sessionStorage.getItem(key) || 'null');
@@ -195,7 +203,6 @@ function buildWrapGrid() {
       <input type="checkbox" name="wrap" value="${c.n}" onchange="handleWrapSelection(this)">
       <span class="color-dot" style="background:${c.h};${border}"></span>
       <span>${c.n}</span>
-      <span class="wrap-price-tag">+$4</span>
     </label>`;
   }).join('');
 }
@@ -414,6 +421,7 @@ function submitOrderForm(event) {
     notes: data.notes,
     sourcePage: 'custom-order',
   });
+  setCashAppOpened(false);
 
   showToast('Review your order and payment details on the next page.');
   resetCustomOrderForm(form);
@@ -982,6 +990,7 @@ function attachRibbonShopEvents() {
             notes: '',
             sourcePage: 'shop',
           });
+          setCashAppOpened(false);
           showToast(`Single Rose + Bear saved: ${roseColor}, ${bearColor}, ${wrap}, local delivery included.`);
           window.location.href = 'payment.html';
           return;
@@ -1022,6 +1031,7 @@ function attachRibbonShopEvents() {
           notes: '',
           sourcePage: 'shop',
         });
+        setCashAppOpened(false);
         showToast(`${ribbonName} bouquet saved: ${size}, ${wrap}, local delivery included.`);
         window.location.href = 'payment.html';
       });
@@ -1044,6 +1054,7 @@ function initPaymentPage() {
 
   const summary = getStoredJson('rosarae-payment-summary');
   const pendingOrder = getStoredJson('rosarae-pending-order');
+  const cashAppOpened = sessionStorage.getItem('rosarae-cashapp-opened') === 'true';
 
   if (!summary) {
     summaryRoot.innerHTML = '<p class="payment-empty">No recent order summary was found yet. Complete an order request or choose a shop item first.</p>';
@@ -1061,11 +1072,11 @@ function initPaymentPage() {
       </div>
       <ul class="payment-list">${details}</ul>
       <div class="payment-actions">
-        <a class="btn btn-primary" href="https://cash.app/$SissyLuv1" target="_blank" rel="noopener">Pay with Cash App</a>
+        <a class="btn btn-primary" href="https://cash.app/$SissyLuv1" target="_blank" rel="noopener" id="cashapp-pay-link">Pay with Cash App</a>
         <a class="btn btn-outline" href="mailto:caytlyn09@gmail.com?subject=Rosarae%20Studio%20Order%20Payment">Email Payment Questions</a>
       </div>
       <p class="payment-note">Send payment through Cash App and include your name or item in the payment note so it matches your order.</p>
-      <p class="payment-note">Cash App is the live payment method right now, so the final order request is sent after you review these details and confirm your info below.</p>
+      <p class="payment-note">Payment is required before the order request can be submitted.</p>
     </div>
   `;
 
@@ -1098,6 +1109,16 @@ function initPaymentPage() {
             <input id="pay-cash-note" name="cashapp_note" type="text" value="${summary.title}" />
           </div>
         </div>
+        <div class="form-grid-2">
+          <div class="field">
+            <label for="pay-cashapp-name">Cash App sender name or $cashtag</label>
+            <input id="pay-cashapp-name" name="cashapp_sender" type="text" placeholder="Example: $YourCashTag" required />
+          </div>
+          <div class="field">
+            <label for="pay-payment-total">Amount sent in Cash App</label>
+            <input id="pay-payment-total" name="payment_amount" type="text" value="${summary.price}" required />
+          </div>
+        </div>
         <div class="field">
           <label for="pay-address">Local delivery address</label>
           <textarea id="pay-address" name="delivery_address" placeholder="Enter the address for local delivery" required>${customer.delivery_address || ''}</textarea>
@@ -1108,18 +1129,30 @@ function initPaymentPage() {
         </div>
         <label class="payment-check">
           <input id="pay-confirm" type="checkbox" required />
-          <span>I understand payment should be sent through Cash App before this order is submitted.</span>
+          <span>I have already sent this payment through Cash App and understand the order request should not be submitted until payment is complete.</span>
         </label>
         <div class="payment-submit-row">
-          <button class="btn btn-primary" type="submit">Send Order Request</button>
-          <a class="btn btn-outline" href="https://cash.app/$SissyLuv1" target="_blank" rel="noopener">Open Cash App</a>
+          <button class="btn btn-primary" type="submit" id="payment-submit-button" ${cashAppOpened ? '' : 'disabled'}>Send Paid Order Request</button>
+          <a class="btn btn-outline" href="https://cash.app/$SissyLuv1" target="_blank" rel="noopener" id="cashapp-confirm-link">Open Cash App</a>
         </div>
+        <p class="payment-note payment-note-strong">You must open Cash App and complete payment before this button becomes available.</p>
       </form>
     </div>
   `;
 
   const paymentForm = document.getElementById('payment-order-form');
   if (!paymentForm) return;
+  const cashAppPayLink = document.getElementById('cashapp-pay-link');
+  const cashAppConfirmLink = document.getElementById('cashapp-confirm-link');
+  const submitButton = document.getElementById('payment-submit-button');
+
+  function unlockPaidSubmit() {
+    setCashAppOpened(true);
+    if (submitButton) submitButton.disabled = false;
+  }
+
+  if (cashAppPayLink) cashAppPayLink.addEventListener('click', unlockPaidSubmit);
+  if (cashAppConfirmLink) cashAppConfirmLink.addEventListener('click', unlockPaidSubmit);
 
   paymentForm.addEventListener('submit', (event) => {
     event.preventDefault();
@@ -1130,9 +1163,18 @@ function initPaymentPage() {
     const deliveryAddress = document.getElementById('pay-address')?.value.trim();
     const notes = document.getElementById('pay-order-notes')?.value.trim();
     const cashappNote = document.getElementById('pay-cash-note')?.value.trim();
+    const cashappSender = document.getElementById('pay-cashapp-name')?.value.trim();
+    const paymentAmount = document.getElementById('pay-payment-total')?.value.trim();
+    const paymentConfirmed = document.getElementById('pay-confirm')?.checked;
+    const paymentOpened = sessionStorage.getItem('rosarae-cashapp-opened') === 'true';
 
-    if (!name || !email || !deliveryAddress) {
-      showToast('Please fill in your name, email, and delivery address.');
+    if (!name || !email || !deliveryAddress || !cashappSender || !paymentAmount) {
+      showToast('Please complete all required customer and payment fields.');
+      return;
+    }
+
+    if (!paymentOpened || !paymentConfirmed) {
+      showToast('Cash App payment must be completed before you can send the order request.');
       return;
     }
 
@@ -1146,6 +1188,9 @@ function initPaymentPage() {
       payment_method: 'Cash App',
       payment_link: 'https://cash.app/$SissyLuv1',
       payment_note: cashappNote || summary.title,
+      payment_confirmed: 'Yes',
+      cashapp_sender: cashappSender,
+      payment_amount: paymentAmount,
       source_page: pendingOrder?.sourcePage || 'shop',
       name,
       email,
@@ -1161,13 +1206,14 @@ function initPaymentPage() {
     })
       .then(() => {
         clearPendingOrder();
+        setCashAppOpened(false);
         showToast('Order request sent successfully.');
         summaryRoot.innerHTML = `
           <div class="payment-card">
             <div class="payment-card-header">
               <p class="payment-label">Order Sent</p>
               <h2>Thank you for your order</h2>
-              <p class="payment-subcopy">Your request was sent to Rosarae Studio. If you have not paid yet, please send your payment through Cash App so your order can be confirmed.</p>
+              <p class="payment-subcopy">Your paid order request was sent to Rosarae Studio.</p>
             </div>
             <div class="payment-actions">
               <a class="btn btn-primary" href="https://cash.app/$SissyLuv1" target="_blank" rel="noopener">Pay with Cash App</a>

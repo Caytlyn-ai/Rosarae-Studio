@@ -67,35 +67,35 @@
         </div>
       </div>
 
-      <div class="section-label">Satin ribbon colors</div>
+      <div class="section-label">Satin ribbon colors (3 free, extra +$2 each)</div>
       <div class="color-grid" id="ribbon-grid"></div>
       <div id="ribbon-extra-note" style="font-size:12px;color:#b06b7a;margin-bottom:.75rem;display:none;"></div>
 
-      <div class="section-label">Occasion ribbon</div>
+      <div class="section-label">Occasion ribbon ($15)</div>
       <div class="field" style="margin-bottom:1.25rem;">
         <select id="o-occ-ribbon" name="occasion_ribbon" onchange="calcOrder()">
           <option value="">None</option>
-          <option value="15">Black "Happy Birthday" satin ribbon - $15</option>
-          <option value="15">Light Blue "Happy Birthday" satin ribbon - $15</option>
-          <option value="15">Claret Red "Happy Birthday" satin ribbon - $15</option>
-          <option value="15">White &amp; Gold "Happy Birthday" satin ribbon - $15</option>
-          <option value="15">Hot Pink "Happy Mother's Day" satin ribbon - $15</option>
-          <option value="15">Claret Red "Love You" satin ribbon - $15</option>
-          <option value="15">Green "Merry Christmas" satin ribbon - $15</option>
+          <option value="15">Black "Happy Birthday" satin ribbon</option>
+          <option value="15">Light Blue "Happy Birthday" satin ribbon</option>
+          <option value="15">Claret Red "Happy Birthday" satin ribbon</option>
+          <option value="15">White &amp; Gold "Happy Birthday" satin ribbon</option>
+          <option value="15">Hot Pink "Happy Mother's Day" satin ribbon</option>
+          <option value="15">Claret Red "Love You" satin ribbon</option>
+          <option value="15">Green "Merry Christmas" satin ribbon</option>
         </select>
       </div>
 
-      <div class="section-label">Floral wrap</div>
+      <div class="section-label">Floral wrap ($4 each) + black mesh pearl wrap ($8)</div>
       <div class="color-grid" id="wrap-grid"></div>
       <div class="addon-grid" style="margin-bottom:1.25rem;">
-        <label class="addon-check"><input type="checkbox" id="o-mesh" name="mesh_wrap" value="Black mesh pearl wrap" onchange="calcOrder()" /> Black mesh pearl wrap <span class="addon-price">+$8.00</span></label>
+        <label class="addon-check"><input type="checkbox" id="o-mesh" name="mesh_wrap" value="Black mesh pearl wrap" onchange="calcOrder()" /> Black mesh pearl wrap</label>
       </div>
 
       <div class="section-label">Add-ons</div>
       <div class="addon-grid">
         <label class="addon-check"><input type="checkbox" id="o-bear" name="add_bear" value="Bear" onchange="calcOrder()" /> Bear <span class="addon-price">+$7.00</span></label>
         <label class="addon-check"><input type="checkbox" id="o-diamonds" name="diamond_push_pins" value="Diamond push pins" onchange="calcOrder()" /> Diamond push pins <span class="addon-price">+$2.00</span></label>
-        <label class="addon-check"><input type="checkbox" id="o-rush" name="rush_order" value="Rush order" onchange="calcOrder()" /> Rush order <span class="addon-price">+$20.00</span></label>
+        <label class="addon-check hidden" id="rush-order-option"><input type="checkbox" id="o-rush" name="rush_order" value="Rush order" onchange="calcOrder()" /> Rush order <span class="addon-price">+$20.00</span></label>
       </div>
       <div id="rush-note" style="display:none;font-size:12px;color:#5f5e5a;margin-bottom:.75rem;line-height:1.6;">Rush orders completed in 1-1.5 weeks. Regular orders may take 2 weeks or longer.</div>
 
@@ -109,8 +109,7 @@
         </div>
       </div>
 
-      <div class="section-label">Occasion &amp; notes</div>
-      <div class="field"><label for="o-occasion">Occasion</label><select id="o-occasion" name="occasion"><option>Birthday</option><option>Wedding</option><option>Anniversary</option><option>Mother's Day</option><option>Valentine's Day</option><option>Home decor</option><option>Gift</option><option>Other</option></select></div>
+      <div class="section-label">Order notes</div>
       <div class="field"><label for="o-notes">Anything else I should know</label><textarea id="o-notes" name="notes" placeholder="Deadline, color combos, special requests, inspo photos..."></textarea></div>
 
       <div class="price-summary">
@@ -123,7 +122,7 @@
         <strong>Payment via CashApp</strong> - After I confirm your order by email, send payment to <a href="https://cash.app/$SissyLuv1" target="_blank" rel="noopener"><strong>$SissyLuv101</strong></a>.
       </div>
 
-      <button class="btn btn-primary btn-full" style="margin-top:1.25rem;padding:15px;" type="submit">Send My Order Request</button>
+      <button class="btn btn-primary btn-full" style="margin-top:1.25rem;padding:15px;" type="submit">Review Order &amp; Pay</button>
     </form>
   </section>
 

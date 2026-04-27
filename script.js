@@ -108,6 +108,41 @@ function savePaymentSummary(summary) {
   }
 }
 
+function savePendingOrder(orderData) {
+  try {
+    sessionStorage.setItem('rosarae-pending-order', JSON.stringify(orderData));
+  } catch (error) {
+    // Ignore storage issues and fall back to payment summary only.
+  }
+}
+
+function clearPendingOrder() {
+  try {
+    sessionStorage.removeItem('rosarae-pending-order');
+  } catch (error) {
+    // Ignore storage issues.
+  }
+}
+
+function getStoredJson(key) {
+  try {
+    return JSON.parse(sessionStorage.getItem(key) || 'null');
+  } catch (error) {
+    return null;
+  }
+}
+
+function resetCustomOrderForm(form) {
+  if (!form) return;
+  form.reset();
+  currentTier = 'small';
+  document.querySelectorAll('.tier-tabs .tier-tab').forEach((button, index) => {
+    button.classList.toggle('active', index === 0);
+  });
+  syncOrderRangeToTier(currentTier);
+  calcOrder();
+}
+
 /* ── MOBILE NAV TOGGLE ── */
 function initNav() {
   const toggle = document.querySelector('.nav-toggle');
@@ -191,6 +226,7 @@ function updR() {
   if (!el) return;
   const rv = document.getElementById('order-rose-value');
   if (rv) rv.textContent = el.value;
+  syncRushAvailability();
   calcOrder();
 }
 
@@ -207,6 +243,23 @@ function syncOrderRangeToTier(tier) {
 
   if (rv) rv.textContent = cfg.value;
   if (note) note.textContent = cfg.note;
+  syncRushAvailability();
+}
+
+function syncRushAvailability() {
+  const rushOption = document.getElementById('rush-order-option');
+  const rushInput = document.getElementById('o-rush');
+  const rushNote = document.getElementById('rush-note');
+  const roseCount = parseInt(document.getElementById('order-rose-range')?.value || '0', 10);
+  const showRush = roseCount > 50;
+
+  if (!rushOption || !rushInput) return;
+
+  rushOption.classList.toggle('hidden', !showRush);
+  if (!showRush) {
+    rushInput.checked = false;
+    if (rushNote) rushNote.style.display = 'none';
+  }
 }
 
 /* ── PRICE CALCULATOR (order page) ── */
@@ -310,8 +363,8 @@ function submitOrderForm(event) {
   }
 
   const data = {
-    'form-name': form.getAttribute('name'),
-    subject: 'New custom order request from Rosarae Studio',
+    'form-name': 'order-payment',
+    subject: 'New Rosarae Studio order',
     name,
     email,
     selected_tier: currentTier,
@@ -324,46 +377,47 @@ function submitOrderForm(event) {
     diamond_push_pins: document.getElementById('o-diamonds')?.checked ? 'Diamond push pins' : '',
     rush_order: document.getElementById('o-rush')?.checked ? 'Rush order' : '',
     bear_color: document.querySelector('input[name="bear_color"]:checked')?.value || '',
-    occasion: document.getElementById('o-occasion')?.value || '',
     notes: document.getElementById('o-notes')?.value || '',
   };
 
-  fetch('/', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: encode(data),
-  })
-    .then(() => {
-      savePaymentSummary({
-        title: 'Custom Order Request',
-        price: document.getElementById('op-total')?.textContent || '$0.00',
-        details: [
-          `Tier: ${currentTier}`,
-          `Rose count: ${data.rose_count}`,
-          `Ribbon colors: ${data.ribbon || 'None selected'}`,
-          `Floral wraps: ${data.wrap || 'None selected'}`,
-          `Mesh wrap: ${data.mesh_wrap || 'Not added'}`,
-          `Bear add-on: ${data.add_bear || 'Not added'}`,
-          `Bear color: ${data.bear_color || 'Not selected'}`,
-          `Diamond push pins: ${data.diamond_push_pins || 'Not added'}`,
-          `Rush order: ${data.rush_order || 'No'}`,
-          `Occasion: ${data.occasion || 'None'}`,
-        ],
-      });
+  const details = [
+    `Tier: ${currentTier}`,
+    `Rose count: ${data.rose_count}`,
+    `Satin ribbon colors: ${data.ribbon || 'None selected'}`,
+    `Occasion ribbon: ${data.occasion_ribbon || 'None selected'}`,
+    `Floral wraps: ${data.wrap || 'None selected'}`,
+    `Black mesh pearl wrap: ${data.mesh_wrap || 'Not added'}`,
+    `Bear add-on: ${data.add_bear || 'Not added'}`,
+    `Bear color: ${data.bear_color || 'Not selected'}`,
+    `Diamond push pins: ${data.diamond_push_pins || 'Not added'}`,
+    `Rush order: ${data.rush_order || 'No'}`,
+  ];
 
-      showToast('Order request sent! Redirecting to payment details...');
-      form.reset();
-      currentTier = 'small';
-      document.querySelectorAll('.tier-tabs .tier-tab').forEach((button, index) => {
-        button.classList.toggle('active', index === 0);
-      });
-      syncOrderRangeToTier(currentTier);
-      calcOrder();
-      window.location.href = 'payment.html';
-    })
-    .catch(() => {
-      showToast('The order could not send. Please try again.');
-    });
+  savePaymentSummary({
+    title: 'Custom Ribbon Rose Order',
+    price: document.getElementById('op-total')?.textContent || '$0.00',
+    details,
+  });
+
+  savePendingOrder({
+    formName: 'order-payment',
+    orderType: 'custom',
+    orderTitle: 'Custom Ribbon Rose Order',
+    orderTotal: document.getElementById('op-total')?.textContent || '$0.00',
+    orderDetails: details,
+    customer: {
+      name,
+      email,
+      phone: '',
+      delivery_address: '',
+    },
+    notes: data.notes,
+    sourcePage: 'custom-order',
+  });
+
+  showToast('Review your order and payment details on the next page.');
+  resetCustomOrderForm(form);
+  window.location.href = 'payment.html';
 }
 
 function submitContactForm() {
@@ -908,6 +962,26 @@ function attachRibbonShopEvents() {
               `Local delivery: ${fmt(LOCAL_DELIVERY_PRICE)}`,
             ],
           });
+          savePendingOrder({
+            formName: 'order-payment',
+            orderType: 'shop',
+            orderTitle: 'Single Rose + Keychain Bear',
+            orderTotal: card.querySelector('[data-ribbon-total]')?.textContent || '$0.00',
+            orderDetails: [
+              `Rose color: ${roseColor}`,
+              `Bear color: ${bearColor}`,
+              `Floral wrap: ${wrap}`,
+              `Local delivery: ${fmt(LOCAL_DELIVERY_PRICE)}`,
+            ],
+            customer: {
+              name: '',
+              email: '',
+              phone: '',
+              delivery_address: '',
+            },
+            notes: '',
+            sourcePage: 'shop',
+          });
           showToast(`Single Rose + Bear saved: ${roseColor}, ${bearColor}, ${wrap}, local delivery included.`);
           window.location.href = 'payment.html';
           return;
@@ -928,6 +1002,26 @@ function attachRibbonShopEvents() {
             `Local delivery: ${fmt(LOCAL_DELIVERY_PRICE)}`,
           ],
         });
+        savePendingOrder({
+          formName: 'order-payment',
+          orderType: 'shop',
+          orderTitle: ribbonName,
+          orderTotal: card.querySelector('[data-ribbon-total]')?.textContent || '$0.00',
+          orderDetails: [
+            `Size: ${size}`,
+            `Wraps: ${wrap}`,
+            `Bear: ${bearChoice}`,
+            `Local delivery: ${fmt(LOCAL_DELIVERY_PRICE)}`,
+          ],
+          customer: {
+            name: '',
+            email: '',
+            phone: '',
+            delivery_address: '',
+          },
+          notes: '',
+          sourcePage: 'shop',
+        });
         showToast(`${ribbonName} bouquet saved: ${size}, ${wrap}, local delivery included.`);
         window.location.href = 'payment.html';
       });
@@ -945,17 +1039,15 @@ function attachRibbonShopEvents() {
 
 function initPaymentPage() {
   const summaryRoot = document.getElementById('payment-summary');
-  if (!summaryRoot) return;
+  const checkoutRoot = document.getElementById('payment-checkout');
+  if (!summaryRoot || !checkoutRoot) return;
 
-  let summary = null;
-  try {
-    summary = JSON.parse(sessionStorage.getItem('rosarae-payment-summary') || 'null');
-  } catch (error) {
-    summary = null;
-  }
+  const summary = getStoredJson('rosarae-payment-summary');
+  const pendingOrder = getStoredJson('rosarae-pending-order');
 
   if (!summary) {
     summaryRoot.innerHTML = '<p class="payment-empty">No recent order summary was found yet. Complete an order request or choose a shop item first.</p>';
+    checkoutRoot.innerHTML = '';
     return;
   }
 
@@ -973,9 +1065,122 @@ function initPaymentPage() {
         <a class="btn btn-outline" href="mailto:caytlyn09@gmail.com?subject=Rosarae%20Studio%20Order%20Payment">Email Payment Questions</a>
       </div>
       <p class="payment-note">Send payment through Cash App and include your name or item in the payment note so it matches your order.</p>
-      <p class="payment-note">Card checkout still needs a secure payment processor, so the live payment flow currently uses Cash App only.</p>
+      <p class="payment-note">Cash App is the live payment method right now, so the final order request is sent after you review these details and confirm your info below.</p>
     </div>
   `;
+
+  const customer = pendingOrder?.customer || {};
+  checkoutRoot.innerHTML = `
+    <div class="payment-card payment-card-secondary">
+      <div class="payment-card-header">
+        <p class="payment-label">Final Step</p>
+        <h2>Send Your Order Request</h2>
+        <p class="payment-subcopy">Add your delivery details, send payment in Cash App, then submit your order so it reaches Rosarae Studio.</p>
+      </div>
+      <form id="payment-order-form" class="payment-order-form">
+        <div class="form-grid-2">
+          <div class="field">
+            <label for="pay-name">Full name</label>
+            <input id="pay-name" name="name" type="text" value="${customer.name || ''}" required />
+          </div>
+          <div class="field">
+            <label for="pay-email">Email</label>
+            <input id="pay-email" name="email" type="email" value="${customer.email || ''}" required />
+          </div>
+        </div>
+        <div class="form-grid-2">
+          <div class="field">
+            <label for="pay-phone">Phone number</label>
+            <input id="pay-phone" name="phone" type="tel" value="${customer.phone || ''}" />
+          </div>
+          <div class="field">
+            <label for="pay-cash-note">Cash App payment note</label>
+            <input id="pay-cash-note" name="cashapp_note" type="text" value="${summary.title}" />
+          </div>
+        </div>
+        <div class="field">
+          <label for="pay-address">Local delivery address</label>
+          <textarea id="pay-address" name="delivery_address" placeholder="Enter the address for local delivery" required>${customer.delivery_address || ''}</textarea>
+        </div>
+        <div class="field">
+          <label for="pay-order-notes">Anything else we should know?</label>
+          <textarea id="pay-order-notes" name="notes" placeholder="Gift note, delivery timing, or order details">${pendingOrder?.notes || ''}</textarea>
+        </div>
+        <label class="payment-check">
+          <input id="pay-confirm" type="checkbox" required />
+          <span>I understand payment should be sent through Cash App before this order is submitted.</span>
+        </label>
+        <div class="payment-submit-row">
+          <button class="btn btn-primary" type="submit">Send Order Request</button>
+          <a class="btn btn-outline" href="https://cash.app/$SissyLuv1" target="_blank" rel="noopener">Open Cash App</a>
+        </div>
+      </form>
+    </div>
+  `;
+
+  const paymentForm = document.getElementById('payment-order-form');
+  if (!paymentForm) return;
+
+  paymentForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+
+    const name = document.getElementById('pay-name')?.value.trim();
+    const email = document.getElementById('pay-email')?.value.trim();
+    const phone = document.getElementById('pay-phone')?.value.trim();
+    const deliveryAddress = document.getElementById('pay-address')?.value.trim();
+    const notes = document.getElementById('pay-order-notes')?.value.trim();
+    const cashappNote = document.getElementById('pay-cash-note')?.value.trim();
+
+    if (!name || !email || !deliveryAddress) {
+      showToast('Please fill in your name, email, and delivery address.');
+      return;
+    }
+
+    const payload = {
+      'form-name': pendingOrder?.formName || 'order-payment',
+      subject: 'New Rosarae Studio order',
+      order_type: pendingOrder?.orderType || 'shop',
+      order_title: summary.title,
+      order_total: summary.price,
+      order_details: (summary.details || []).join(' | '),
+      payment_method: 'Cash App',
+      payment_link: 'https://cash.app/$SissyLuv1',
+      payment_note: cashappNote || summary.title,
+      source_page: pendingOrder?.sourcePage || 'shop',
+      name,
+      email,
+      phone,
+      delivery_address: deliveryAddress,
+      notes,
+    };
+
+    fetch('/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: encode(payload),
+    })
+      .then(() => {
+        clearPendingOrder();
+        showToast('Order request sent successfully.');
+        summaryRoot.innerHTML = `
+          <div class="payment-card">
+            <div class="payment-card-header">
+              <p class="payment-label">Order Sent</p>
+              <h2>Thank you for your order</h2>
+              <p class="payment-subcopy">Your request was sent to Rosarae Studio. If you have not paid yet, please send your payment through Cash App so your order can be confirmed.</p>
+            </div>
+            <div class="payment-actions">
+              <a class="btn btn-primary" href="https://cash.app/$SissyLuv1" target="_blank" rel="noopener">Pay with Cash App</a>
+              <a class="btn btn-outline" href="shop.html">Back to Shop</a>
+            </div>
+          </div>
+        `;
+        checkoutRoot.innerHTML = '';
+      })
+      .catch(() => {
+        showToast('The order could not send. Please try again.');
+      });
+  });
 }
 
 /* ── INITIALISE on DOM ready ── */

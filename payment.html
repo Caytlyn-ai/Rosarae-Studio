@@ -25,14 +25,34 @@
 
   <div class="page-header">
     <h1>Complete Your Payment</h1>
-    <p>Review your order details below, then send payment through Cash App.</p>
+    <p>Review your order details, send payment through Cash App, then submit your final order request.</p>
   </div>
 
   <section class="section section-alt">
     <div class="container payment-layout">
       <div id="payment-summary"></div>
+      <div id="payment-checkout" class="mt-1"></div>
     </div>
   </section>
+
+  <form name="order-payment" data-netlify="true" netlify-honeypot="bot-field" hidden>
+    <input type="hidden" name="form-name" value="order-payment" />
+    <input type="text" name="bot-field" />
+    <input type="text" name="subject" />
+    <input type="text" name="order_type" />
+    <input type="text" name="order_title" />
+    <input type="text" name="order_total" />
+    <textarea name="order_details"></textarea>
+    <input type="text" name="payment_method" />
+    <input type="text" name="payment_link" />
+    <input type="text" name="payment_note" />
+    <input type="text" name="source_page" />
+    <input type="text" name="name" />
+    <input type="email" name="email" />
+    <input type="text" name="phone" />
+    <textarea name="delivery_address"></textarea>
+    <textarea name="notes"></textarea>
+  </form>
 
   <footer>
     &copy; 2026 Rosarae Studio &nbsp;&middot;&nbsp; Handmade with love

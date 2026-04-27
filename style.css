@@ -645,6 +645,10 @@ h3 { font-size: clamp(18px, 2.5vw, 22px); }
   box-shadow: var(--shadow);
 }
 
+.payment-card-secondary {
+  margin-top: 1rem;
+}
+
 .payment-card-header {
   margin-bottom: 1rem;
 }
@@ -665,6 +669,13 @@ h3 { font-size: clamp(18px, 2.5vw, 22px); }
   font-size: 26px;
   font-weight: 700;
   color: var(--rose);
+}
+
+.payment-subcopy {
+  font-size: 14px;
+  color: var(--text-mid);
+  line-height: 1.75;
+  max-width: 560px;
 }
 
 .payment-list {
@@ -694,6 +705,41 @@ h3 { font-size: clamp(18px, 2.5vw, 22px); }
   font-size: 13px;
   color: var(--text-mid);
   line-height: 1.7;
+}
+
+.payment-order-form {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.payment-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  padding: 0.9rem 1rem;
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-md);
+  background: #fffafb;
+  font-size: 13px;
+  color: var(--text-mid);
+  line-height: 1.65;
+  margin-bottom: 0.9rem;
+}
+
+.payment-check input {
+  margin-top: 0.2rem;
+  accent-color: var(--rose);
+}
+
+.payment-submit-row {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.payment-submit-row .btn {
+  flex: 1 1 220px;
+  text-align: center;
 }
 
 .ribbon-modal {
@@ -1504,6 +1550,10 @@ footer a { color: var(--rose); }
   .page-header p {
     font-size: 14px;
     max-width: 420px;
+  }
+
+  .payment-submit-row {
+    flex-direction: column;
   }
 
   .container > .fade-in[style*="grid-template-columns:1fr 1fr"] {

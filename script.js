@@ -1100,7 +1100,7 @@ function initPaymentPage() {
       <div class="payment-actions">
         <a class="btn btn-outline" href="mailto:caytlyn09@gmail.com?subject=Rosarae%20Studio%20Order%20Payment">Email Payment Questions</a>
       </div>
-      <p class="payment-note">Orders are paid securely through Stripe Checkout before the final paid order request is sent to Rosarae Studio.</p>
+      <p class="payment-note">Accepted payment methods include Visa, Mastercard, American Express, Discover, and other card options shown at checkout.</p>
       ${statusMessage}
     </div>
   `;
@@ -1125,7 +1125,7 @@ function initPaymentPage() {
     email: customer.email,
     phone: customer.phone,
     delivery_address: customer.delivery_address,
-    notes: customer.notes,
+    notes: `Cardholder: ${customer.cardholder_name || 'Not provided'} | Billing ZIP: ${customer.billing_zip || 'Not provided'}`,
   });
 
   const renderPaidSuccess = () => {
@@ -1218,7 +1218,7 @@ function initPaymentPage() {
       <div class="payment-card-header">
         <p class="payment-label">Final Step</p>
         <h2>Pay with Stripe</h2>
-        <p class="payment-subcopy">Add your customer and delivery details, then continue to Stripe Checkout. Your order request will only be sent after Stripe confirms payment.</p>
+        <p class="payment-subcopy">Add your customer, delivery, and billing details, then continue to checkout. Your order request will only be sent after payment is confirmed.</p>
       </div>
       <form id="payment-order-form" class="payment-order-form">
         <div class="form-grid-2">
@@ -1243,11 +1243,17 @@ function initPaymentPage() {
         </div>
         <div class="field">
           <label for="pay-address">Local delivery address</label>
-          <textarea id="pay-address" name="delivery_address" placeholder="Enter the address for local delivery" required>${customer.delivery_address || ''}</textarea>
+          <textarea id="pay-address" name="delivery_address" placeholder="Enter the address for local delivery" rows="3" required>${customer.delivery_address || ''}</textarea>
         </div>
-        <div class="field">
-          <label for="pay-order-notes">Anything else we should know?</label>
-          <textarea id="pay-order-notes" name="notes" placeholder="Gift note, delivery timing, or order details">${pendingOrder?.notes || ''}</textarea>
+        <div class="form-grid-2">
+          <div class="field">
+            <label for="pay-cardholder">Name on card</label>
+            <input id="pay-cardholder" name="cardholder_name" type="text" value="${customer.cardholder_name || ''}" placeholder="Cardholder full name" required />
+          </div>
+          <div class="field">
+            <label for="pay-billing-zip">Billing ZIP code</label>
+            <input id="pay-billing-zip" name="billing_zip" type="text" value="${customer.billing_zip || ''}" placeholder="ZIP code" required />
+          </div>
         </div>
         <div class="payment-submit-row">
           <button class="btn btn-primary" type="submit" id="payment-submit-button">Pay with Stripe</button>
@@ -1268,10 +1274,11 @@ function initPaymentPage() {
     const email = document.getElementById('pay-email')?.value.trim();
     const phone = document.getElementById('pay-phone')?.value.trim();
     const deliveryAddress = document.getElementById('pay-address')?.value.trim();
-    const notes = document.getElementById('pay-order-notes')?.value.trim();
+    const cardholderName = document.getElementById('pay-cardholder')?.value.trim();
+    const billingZip = document.getElementById('pay-billing-zip')?.value.trim();
 
-    if (!name || !email || !deliveryAddress) {
-      showToast('Please fill in your name, email, and delivery address.');
+    if (!name || !email || !deliveryAddress || !cardholderName || !billingZip) {
+      showToast('Please fill in your name, email, address, and billing details.');
       return;
     }
 
@@ -1287,8 +1294,10 @@ function initPaymentPage() {
         email,
         phone,
         delivery_address: deliveryAddress,
+        cardholder_name: cardholderName,
+        billing_zip: billingZip,
       },
-      notes,
+      notes: '',
       sourcePage: pendingOrder?.sourcePage || 'shop',
     };
 
@@ -1306,7 +1315,7 @@ function initPaymentPage() {
         orderTotal: parseMoneyString(summary.price),
         orderDetails: summary.details || [],
         customer: updatedPendingOrder.customer,
-        notes,
+        notes: '',
         sourcePage: updatedPendingOrder.sourcePage,
         siteUrl: window.location.origin,
       }),

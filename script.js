@@ -46,7 +46,7 @@ const WRAP_COLORS = [
   { n: 'Beige',      h: '#e8d8c4' },
 ];
 
-const TIER_RATES = { small: 2.50, medium: 2.75, large: 3.00 };
+const TIER_RATES = { small: 2.00, medium: 2.00, large: 2.00 };
 const TIER_CONFIG = {
   small: { min: 1, max: 9, value: 5, note: 'Small bouquets range from 1 to 9 roses.' },
   medium: { min: 10, max: 40, value: 20, note: 'Medium bouquets range from 10 to 40 roses.' },
@@ -56,14 +56,14 @@ const TIER_CONFIG = {
 let currentTier = 'small';
 
 const SHOP_SIZES = [
-  { id: 'small', label: 'Small (5 roses)', roses: 5, price: 18 },
-  { id: 'medium', label: 'Medium (10 roses)', roses: 10, price: 32 },
-  { id: 'large', label: 'Large (20 roses)', roses: 20, price: 58 },
+  { id: 'small', label: 'Small (5 roses)', roses: 5, price: 10 },
+  { id: 'medium', label: 'Medium (10 roses)', roses: 10, price: 20 },
+  { id: 'large', label: 'Large (20 roses)', roses: 20, price: 40 },
 ];
 
 const SHOP_EXTRAS = [
-  { id: 'bear', label: 'Plush Keychain Bear', price: 10 },
-  { id: 'diamonds', label: 'Diamond push pins', price: 4 },
+  { id: 'bear', label: 'Plush Keychain Bear', price: 7 },
+  { id: 'diamonds', label: 'Diamond push pins', price: 2 },
 ];
 
 const BEAR_COLORS = [
@@ -73,10 +73,7 @@ const BEAR_COLORS = [
   { n: 'Brown', h: '#a07850' },
 ];
 
-const DELIVERY_OPTIONS = [
-  { id: 'pickup', label: 'Pickup', price: 0 },
-  { id: 'delivery', label: 'Local Delivery', price: 15 },
-];
+const LOCAL_DELIVERY_PRICE = 8;
 
 /* ── HELPERS ── */
 function fmt(n) {
@@ -226,7 +223,7 @@ function calcOrder() {
   if (tierField) tierField.value = currentTier;
 
   let roses = 5;
-  const rate = TIER_RATES[currentTier] || 2.50;
+  const rate = TIER_RATES[currentTier] || 2.00;
   roses = parseInt(document.getElementById('order-rose-range')?.value || TIER_CONFIG[currentTier]?.value || 5);
 
   let base = roses * rate;
@@ -239,7 +236,7 @@ function calcOrder() {
   const checkedRibbons = document.querySelectorAll('#ribbon-grid input:checked').length;
   if (checkedRibbons > 3) {
     const extra = checkedRibbons - 3;
-    const rc = extra * 2.50;
+    const rc = extra * 2.00;
     rows += `<div class="price-row"><span>Extra ribbon colors (${extra})</span><span>+${fmt(rc)}</span></div>`;
     addl += rc;
     if (extraNote) {
@@ -273,8 +270,8 @@ function calcOrder() {
   // Bear
   const bearCB = document.getElementById('o-bear');
   if (bearCB?.checked) {
-    rows += `<div class="price-row"><span>Bear</span><span>+$10.00</span></div>`;
-    addl += 10;
+    rows += `<div class="price-row"><span>Bear</span><span>+$7.00</span></div>`;
+    addl += 7;
     if (bearSection) bearSection.style.display = 'block';
   } else {
     if (bearSection) bearSection.style.display = 'none';
@@ -282,8 +279,8 @@ function calcOrder() {
 
   // Diamond push pins
   if (document.getElementById('o-diamonds')?.checked) {
-    rows += `<div class="price-row"><span>Diamond push pins</span><span>+$4.00</span></div>`;
-    addl += 4;
+    rows += `<div class="price-row"><span>Diamond push pins</span><span>+$2.00</span></div>`;
+    addl += 2;
   }
 
   // Rush order
@@ -502,7 +499,7 @@ function renderRibbonShop() {
           <h3 class="ribbon-gallery-title">Single Rose + Bear</h3>
         </div>
         <p class="ribbon-gallery-copy">A single ribbon rose paired with a keychain bear for a sweet little keepsake gift.</p>
-        <div class="ribbon-gallery-price">from ${fmt(13)}</div>
+        <div class="ribbon-gallery-price">from ${fmt(9)}</div>
       </div>
     </article>
   `;
@@ -611,16 +608,6 @@ function renderRibbonDetail(colorName) {
     </label>
   `;
 
-  const deliveryOptions = DELIVERY_OPTIONS.map((option, index) => `
-    <label class="ribbon-option">
-      <input type="radio" name="delivery-${slug}" value="${option.id}" data-price="${option.price}" ${index === 0 ? 'checked' : ''}>
-      <span class="ribbon-option-copy">
-        <span class="ribbon-option-title">${option.label}${option.price ? ` (+$${option.price})` : ''}</span>
-        <span class="ribbon-option-note">${option.id === 'pickup' ? 'Arrange a pickup time after ordering' : 'Available for nearby local delivery'}</span>
-      </span>
-    </label>
-  `).join('');
-
   detail.innerHTML = `
     <article class="ribbon-card" data-ribbon-card="${slug}">
       <div class="ribbon-card-header">
@@ -656,7 +643,7 @@ function renderRibbonDetail(colorName) {
       </fieldset>
 
       <fieldset class="ribbon-fieldset">
-        <legend>Choose Wrap Style</legend>
+        <legend>Choose Floral Wrap</legend>
         <div class="ribbon-option-list">${wrapOptions}${meshOption}</div>
       </fieldset>
 
@@ -670,18 +657,13 @@ function renderRibbonDetail(colorName) {
         <div class="ribbon-option-list">${bearColorOptions}</div>
       </fieldset>
 
-      <fieldset class="ribbon-fieldset">
-        <legend>Delivery Option</legend>
-        <div class="ribbon-option-list">${deliveryOptions}</div>
-      </fieldset>
-
       <div class="ribbon-card-footer">
         <div class="ribbon-total">
           <span class="ribbon-total-label">Estimated total</span>
-          <span class="ribbon-total-price" data-ribbon-total="${slug}">${fmt(SHOP_SIZES[0].price)}</span>
+          <span class="ribbon-total-price" data-ribbon-total="${slug}">${fmt(SHOP_SIZES[0].price + LOCAL_DELIVERY_PRICE)}</span>
         </div>
         <button class="btn btn-primary ribbon-order-btn" type="button" data-ribbon-order="${slug}">Order Now</button>
-        <p class="ribbon-meta">Each bouquet is handmade. Slight variations may occur.<br>Ready in up to 5 days.</p>
+        <p class="ribbon-meta">Local delivery is included in the total at ${fmt(LOCAL_DELIVERY_PRICE)}.<br>Each bouquet is handmade. Slight variations may occur.<br>Ready in up to 5 days.</p>
       </div>
     </article>
   `;
@@ -726,7 +708,7 @@ function renderSingleRoseDetail() {
   `).join('');
 
   detail.innerHTML = `
-    <article class="ribbon-card" data-ribbon-card="single-rose-bear" data-base-price="13">
+    <article class="ribbon-card" data-ribbon-card="single-rose-bear" data-base-price="9">
       <div class="ribbon-card-header">
         <div class="ribbon-card-hero ribbon-feature-visual">
           <span class="ribbon-card-image-tag">Future product photo</span>
@@ -745,7 +727,7 @@ function renderSingleRoseDetail() {
           <p class="ribbon-card-copy">A single satin ribbon rose paired with a keychain bear, one floral wrap, and an optional diamond pushpin.</p>
           <div class="ribbon-card-starting">
             <span class="ribbon-card-starting-label">Starting at</span>
-            <span class="ribbon-card-starting-price">${fmt(13)}</span>
+            <span class="ribbon-card-starting-price">${fmt(9)}</span>
           </div>
         </div>
       </div>
@@ -778,32 +760,12 @@ function renderSingleRoseDetail() {
         <legend>Add On</legend>
         <div class="ribbon-option-list">
           <label class="ribbon-option">
-            <input type="checkbox" name="single-diamond" value="Diamond push pin" data-price="4">
+            <input type="checkbox" name="single-diamond" value="Diamond push pin" data-price="2">
             <span class="ribbon-option-copy">
               <span class="ribbon-option-title">1 Diamond pushpin</span>
-              <span class="ribbon-option-note">A small sparkle detail for the finished bouquet</span>
+            <span class="ribbon-option-note">A small sparkle detail for the finished bouquet</span>
             </span>
-            <span class="ribbon-price-line">+${fmt(4)}</span>
-          </label>
-        </div>
-      </fieldset>
-
-      <fieldset class="ribbon-fieldset">
-        <legend>Delivery Option</legend>
-        <div class="ribbon-option-list">
-          <label class="ribbon-option">
-            <input type="radio" name="single-delivery" value="Pickup" data-price="0" checked>
-            <span class="ribbon-option-copy">
-              <span class="ribbon-option-title">Pickup</span>
-              <span class="ribbon-option-note">Arrange pickup time after ordering</span>
-            </span>
-          </label>
-          <label class="ribbon-option">
-            <input type="radio" name="single-delivery" value="Local Delivery" data-price="15">
-            <span class="ribbon-option-copy">
-              <span class="ribbon-option-title">Local Delivery (+$15)</span>
-              <span class="ribbon-option-note">Available for nearby local delivery</span>
-            </span>
+            <span class="ribbon-price-line">+${fmt(2)}</span>
           </label>
         </div>
       </fieldset>
@@ -811,10 +773,10 @@ function renderSingleRoseDetail() {
       <div class="ribbon-card-footer">
         <div class="ribbon-total">
           <span class="ribbon-total-label">Estimated total</span>
-          <span class="ribbon-total-price" data-ribbon-total="single-rose-bear">${fmt(13)}</span>
+          <span class="ribbon-total-price" data-ribbon-total="single-rose-bear">${fmt(9 + LOCAL_DELIVERY_PRICE)}</span>
         </div>
         <button class="btn btn-primary ribbon-order-btn" type="button" data-ribbon-order="single-rose-bear">Order Now</button>
-        <p class="ribbon-meta">Each item is handmade. Slight variations may occur.<br>Ready in up to 5 days.</p>
+        <p class="ribbon-meta">Local delivery is included in the total at ${fmt(LOCAL_DELIVERY_PRICE)}.<br>Each item is handmade. Slight variations may occur.<br>Ready in up to 5 days.</p>
       </div>
     </article>
   `;
@@ -822,22 +784,20 @@ function renderSingleRoseDetail() {
 
 function calculateRibbonCardTotal(card) {
   if (card.dataset.ribbonCard === 'single-rose-bear') {
-    const basePrice = Number(card.dataset.basePrice || 13);
+    const basePrice = Number(card.dataset.basePrice || 9);
     const wrapPrice = Number(card.querySelector('input[name="single-wrap"]:checked')?.dataset.price || 0);
     const diamondPrice = Number(card.querySelector('input[name="single-diamond"]:checked')?.dataset.price || 0);
-    const deliveryPrice = Number(card.querySelector('input[name="single-delivery"]:checked')?.dataset.price || 0);
     const totalNode = card.querySelector('[data-ribbon-total]');
-    if (totalNode) totalNode.textContent = fmt(basePrice + wrapPrice + diamondPrice + deliveryPrice);
+    if (totalNode) totalNode.textContent = fmt(basePrice + wrapPrice + diamondPrice + LOCAL_DELIVERY_PRICE);
     return;
   }
 
   const selectedSize = card.querySelector('input[name^="size-"]:checked');
-  const selectedDelivery = card.querySelector('input[name^="delivery-"]:checked');
   const extraInputs = card.querySelectorAll('input[name^="extra-"]:checked');
   const meshInput = card.querySelector('input[name^="mesh-"]:checked');
   const wrapInputs = card.querySelectorAll('input[name^="wrap-"]:checked');
 
-  let total = Number(selectedSize?.dataset.price || 0) + Number(selectedDelivery?.dataset.price || 0);
+  let total = Number(selectedSize?.dataset.price || 0) + LOCAL_DELIVERY_PRICE;
   extraInputs.forEach((input) => {
     total += Number(input.dataset.price || 0);
   });
@@ -938,7 +898,6 @@ function attachRibbonShopEvents() {
           const roseColor = card.querySelector('input[name="single-rose-color"]:checked')?.value || 'Rose color';
           const bearColor = card.querySelector('input[name="single-bear-color"]:checked')?.value || 'Bear color';
           const wrap = card.querySelector('input[name="single-wrap"]:checked')?.value || 'No floral wrap';
-          const delivery = card.querySelector('input[name="single-delivery"]:checked')?.value || 'Pickup';
           savePaymentSummary({
             title: 'Single Rose + Keychain Bear',
             price: card.querySelector('[data-ribbon-total]')?.textContent || '$0.00',
@@ -946,17 +905,16 @@ function attachRibbonShopEvents() {
               `Rose color: ${roseColor}`,
               `Bear color: ${bearColor}`,
               `Floral wrap: ${wrap}`,
-              `Delivery: ${delivery}`,
+              `Local delivery: ${fmt(LOCAL_DELIVERY_PRICE)}`,
             ],
           });
-          showToast(`Single Rose + Bear saved: ${roseColor}, ${bearColor}, ${wrap}, ${delivery}.`);
+          showToast(`Single Rose + Bear saved: ${roseColor}, ${bearColor}, ${wrap}, local delivery included.`);
           window.location.href = 'payment.html';
           return;
         }
         const ribbonName = card.querySelector('.ribbon-card-title')?.textContent || 'bouquet';
         const size = card.querySelector('input[name^="size-"]:checked')?.closest('.ribbon-option')?.querySelector('.ribbon-option-title')?.textContent || 'Custom size';
         const wrap = Array.from(card.querySelectorAll('input[name^="wrap-"]:checked')).map((input) => input.value).join(', ') || 'No floral wrap selected';
-        const delivery = card.querySelector('input[name^="delivery-"]:checked')?.closest('.ribbon-option')?.querySelector('.ribbon-option-title')?.textContent || 'Pickup';
         const bearChoice = card.querySelector('input[name^="extra-"][value="bear"]')?.checked
           ? (card.querySelector('input[name^="bear-color-"]:checked')?.value || 'Bear color not chosen')
           : 'No bear add-on';
@@ -967,10 +925,10 @@ function attachRibbonShopEvents() {
             `Size: ${size}`,
             `Wraps: ${wrap}`,
             `Bear: ${bearChoice}`,
-            `Delivery: ${delivery}`,
+            `Local delivery: ${fmt(LOCAL_DELIVERY_PRICE)}`,
           ],
         });
-        showToast(`${ribbonName} bouquet saved: ${size}, ${wrap}, ${delivery}.`);
+        showToast(`${ribbonName} bouquet saved: ${size}, ${wrap}, local delivery included.`);
         window.location.href = 'payment.html';
       });
     }
